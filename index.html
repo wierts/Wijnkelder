@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Wijnvoorraad</title>
+<style>
+  :root {
+    --bg: #faf7f2;
+    --card-bg: #ffffff;
+    --text: #2a2320;
+    --text-dim: #746a63;
+    --border: #e4dcd3;
+    --accent: #7b1e2b;
+    --accent-light: #f4e6e8;
+    --now: #b23a2e;
+    --now-bg: #fbe7e4;
+    --soon: #b8860b;
+    --soon-bg: #fbf1dc;
+    --wait: #3f7d4f;
+    --wait-bg: #e5f2e8;
+    --drunk: #9c9188;
+    --drunk-bg: #efece8;
+    --radius: 14px;
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #1b1815;
+      --card-bg: #262220;
+      --text: #f0ebe6;
+      --text-dim: #b5aaa1;
+      --border: #3a3430;
+      --accent: #d97b86;
+      --accent-light: #3a2226;
+      --now: #e8837a;
+      --now-bg: #3a2220;
+      --soon: #e0b64c;
+      --soon-bg: #3a3020;
+      --wait: #7fc491;
+      --wait-bg: #1f3324;
+      --drunk: #8a8078;
+      --drunk-bg: #2c2825;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #1b1815;
+    --card-bg: #262220;
+    --text: #f0ebe6;
+    --text-dim: #b5aaa1;
+    --border: #3a3430;
+    --accent: #d97b86;
+    --accent-light: #3a2226;
+    --now: #e8837a;
+    --now-bg: #3a2220;
+    --soon: #e0b64c;
+    --soon-bg: #3a3020;
+    --wait: #7fc491;
+    --wait-bg: #1f3324;
+    --drunk: #8a8078;
+    --drunk-bg: #2c2825;
+  }
+  html { scroll-padding-top: env(safe-area-inset-top, 0px); }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  header {
+    padding: env(safe-area-inset-top, 0px) 16px 0;
+    background: var(--accent);
+    color: #fff;
+  }
+  .header-inner { padding: 14px 0 16px; max-width: 720px; margin: 0 auto; }
+  h1 { font-size: 1.3rem; margin: 0 0 2px; font-weight: 700; }
+  .subtitle { font-size: 0.82rem; opacity: 0.85; }
+  .sync-badge { font-size: 0.72rem; opacity: 0.8; margin-top: 4px; }
+  .container { max-width: 720px; margin: 0 auto; padding: 14px 16px 40px; }
+
+  .controls {
+    position: sticky;
+    top: env(safe-area-inset-top, 0px);
+    background: var(--bg);
+    z-index: 5;
+    padding: 10px 0 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .search {
+    width: 100%;
+    padding: 9px 12px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--card-bg);
+    color: var(--text);
+    font-size: 0.92rem;
+  }
+  .row { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+  .chip {
+    border: 1px solid var(--border);
+    background: var(--card-bg);
+    color: var(--text-dim);
+    border-radius: 999px;
+    padding: 6px 12px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .chip.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+  select {
+    border: 1px solid var(--border);
+    background: var(--card-bg);
+    color: var(--text);
+    border-radius: 10px;
+    padding: 6px 8px;
+    font-size: 0.8rem;
+  }
+  .count { font-size: 0.78rem; color: var(--text-dim); margin-left: auto; }
+
+  .card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 13px 14px;
+    margin-bottom: 10px;
+  }
+  .card.drunk-item { opacity: 0.55; }
+  .card-top { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; }
+  .card-title { font-weight: 700; font-size: 0.97rem; line-height: 1.3; }
+  .card-sub { font-size: 0.82rem; color: var(--text-dim); margin-top: 2px; }
+  .badge {
+    font-size: 0.72rem;
+    font-weight: 700;
+    border-radius: 999px;
+    padding: 3px 9px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .badge.now { background: var(--now-bg); color: var(--now); }
+  .badge.soon { background: var(--soon-bg); color: var(--soon); }
+  .badge.wait { background: var(--wait-bg); color: var(--wait); }
+  .badge.drunk { background: var(--drunk-bg); color: var(--drunk); }
+  .window { font-size: 0.8rem; margin-top: 7px; color: var(--text); }
+  .actions { display: flex; gap: 8px; margin-top: 9px; }
+  .btn {
+    font-size: 0.76rem;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-dim);
+    border-radius: 8px;
+    padding: 5px 10px;
+    cursor: pointer;
+  }
+  .btn:hover { background: var(--accent-light); color: var(--accent); }
+  .btn.danger:hover { background: var(--now-bg); color: var(--now); }
+  .btn:disabled { opacity: 0.4; cursor: default; }
+
+  .add-toggle {
+    width: 100%;
+    padding: 11px;
+    border-radius: 10px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    margin: 6px 0 14px;
+  }
+  .add-form {
+    display: none;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px;
+    margin-bottom: 14px;
+  }
+  .add-form.open { display: block; }
+  .add-form label { font-size: 0.76rem; color: var(--text-dim); display: block; margin: 8px 0 3px; }
+  .add-form input, .add-form select {
+    width: 100%;
+    padding: 8px 10px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--text);
+    font-size: 0.88rem;
+  }
+  .add-form .save-btn {
+    margin-top: 12px;
+    width: 100%;
+    padding: 10px;
+    border-radius: 8px;
+    border: none;
+    background: var(--wait);
+    color: #fff;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .empty { text-align: center; color: var(--text-dim); padding: 30px 0; font-size: 0.88rem; }
+  .notice {
+    background: var(--soon-bg);
+    color: var(--soon);
+    border-radius: 10px;
+    padding: 10px 12px;
+    font-size: 0.8rem;
+    margin-bottom: 10px;
+  }
+</style>
+</head>
+<body>
+<header>
+  <div class="header-inner">
+    <h1>🍷 Wijnvoorraad</h1>
+    <div class="subtitle" id="headerCount">Laden…</div>
+    <div class="sync-badge" id="syncBadge"></div>
+  </div>
+</header>
+
+<div class="container">
+  <div id="noticeBox"></div>
+
+  <div class="controls">
+    <input class="search" id="search" placeholder="Zoek op naam, druif, regio...">
+    <div class="row">
+      <button class="chip active" data-filter="all">Alle</button>
+      <button class="chip" data-filter="now">Nu drinken</button>
+      <button class="chip" data-filter="soon">Binnenkort</button>
+      <button class="chip" data-filter="wait">Kan wachten</button>
+      <button class="chip" data-filter="drunk">Opgedronken</button>
+      <select id="sortSelect">
+        <option value="statusYear">Status → jaar</option>
+        <option value="yearAsc">Jaargang oud → nieuw</option>
+        <option value="yearDesc">Jaargang nieuw → oud</option>
+        <option value="name">Naam A-Z</option>
+      </select>
+    </div>
+    <div class="row"><span class="count" id="resultCount"></span></div>
+  </div>
+
+  <button class="add-toggle" id="addToggle">+ Fles toevoegen</button>
+  <div class="add-form" id="addForm">
+    <label>Naam / producent *</label>
+    <input id="f_name" placeholder="bv. Château Voorbeeld">
+    <label>Druif / stijl</label>
+    <input id="f_grape" placeholder="bv. Chardonnay">
+    <label>Regio / land</label>
+    <input id="f_region" placeholder="bv. Bourgogne, Frankrijk">
+    <label>Jaargang</label>
+    <input id="f_year" type="number" placeholder="bv. 2019">
+    <label>Status</label>
+    <select id="f_status">
+      <option value="now">Nu drinken</option>
+      <option value="soon">Binnenkort</option>
+      <option value="wait">Kan wachten</option>
+    </select>
+    <label>Drinkvenster / notitie</label>
+    <input id="f_window" placeholder="bv. tot 2030">
+    <button class="save-btn" id="saveBtn">Opslaan</button>
+  </div>
+
+  <div id="list"></div>
+  <div class="empty" id="emptyMsg" style="display:none;">Geen flessen gevonden.</div>
+</div>
+
+<script>
+const statusLabel = { now: 'Nu drinken', soon: 'Binnenkort', wait: 'Kan wachten' };
+const statusOrder = { now: 0, soon: 1, wait: 2 };
+
+let wines = [];
+let currentFilter = 'all';
+let currentSort = 'statusYear';
+let searchTerm = '';
+let dbRef = null;
+let writable = true;
+
+function escapeHtml(str) {
+  const d = document.createElement('div');
+  d.textContent = str || '';
+  return d.innerHTML;
+}
+
+function render() {
+  const list = document.getElementById('list');
+  const emptyMsg = document.getElementById('emptyMsg');
+  list.innerHTML = '';
+
+  let filtered = wines.filter(w => {
+    if (currentFilter === 'drunk') return w.drunk;
+    if (w.drunk) return false;
+    if (currentFilter !== 'all' && w.status !== currentFilter) return false;
+    if (searchTerm) {
+      const hay = (w.name + ' ' + (w.grape||'') + ' ' + (w.region||'')).toLowerCase();
+      if (!hay.includes(searchTerm)) return false;
+    }
+    return true;
+  });
+
+  filtered.sort((a, b) => {
+    if (currentSort === 'yearAsc') return (a.year||0) - (b.year||0);
+    if (currentSort === 'yearDesc') return (b.year||0) - (a.year||0);
+    if (currentSort === 'name') return (a.name||'').localeCompare(b.name||'');
+    const so = statusOrder[a.status] - statusOrder[b.status];
+    if (so !== 0) return so;
+    return (a.year||0) - (b.year||0);
+  });
+
+  document.getElementById('resultCount').textContent = filtered.length + ' resultaat' + (filtered.length===1?'':'en');
+  const activeCount = wines.filter(w => !w.drunk).length;
+  document.getElementById('headerCount').textContent = activeCount + ' flessen op voorraad · ' + wines.filter(w=>w.drunk).length + ' opgedronken';
+
+  if (filtered.length === 0) {
+    emptyMsg.style.display = 'block';
+    return;
+  }
+  emptyMsg.style.display = 'none';
+
+  filtered.forEach(w => {
+    const card = document.createElement('div');
+    card.className = 'card' + (w.drunk ? ' drunk-item' : '');
+    const badgeClass = w.drunk ? 'drunk' : w.status;
+    const badgeText = w.drunk ? 'Opgedronken' : statusLabel[w.status];
+    card.innerHTML = `
+      <div class="card-top">
+        <div>
+          <div class="card-title">${escapeHtml(w.name)}${w.year ? ' ' + w.year : ''}</div>
+          <div class="card-sub">${escapeHtml(w.grape || '')}${w.grape && w.region ? ' · ' : ''}${escapeHtml(w.region || '')}</div>
+        </div>
+        <span class="badge ${badgeClass}">${badgeText}</span>
+      </div>
+      ${w.window ? `<div class="window">${escapeHtml(w.window)}</div>` : ''}
+      <div class="actions">
+        ${!w.drunk ? `<button class="btn" data-action="drunk" data-id="${w.id}" ${writable?'':'disabled'}>Opgedronken</button>` : `<button class="btn" data-action="undrunk" data-id="${w.id}" ${writable?'':'disabled'}>Terugzetten</button>`}
+        <button class="btn danger" data-action="delete" data-id="${w.id}" ${writable?'':'disabled'}>Verwijderen</button>
+      </div>
+    `;
+    list.appendChild(card);
+  });
+}
+
+document.getElementById('list').addEventListener('click', async (e) => {
+  const btn = e.target.closest('button[data-action]');
+  if (!btn || btn.disabled || !dbRef) return;
+  const id = btn.dataset.id;
+  const action = btn.dataset.action;
+  try {
+    if (action === 'drunk') await dbRef.collection('wines').doc(id).update({ drunk: true });
+    if (action === 'undrunk') await dbRef.collection('wines').doc(id).update({ drunk: false });
+    if (action === 'delete') await dbRef.collection('wines').doc(id).delete();
+  } catch (err) {
+    showNotice('Wijziging kon niet worden opgeslagen. Probeer opnieuw.');
+  }
+});
+
+document.querySelectorAll('.chip[data-filter]').forEach(chip => {
+  chip.addEventListener('click', () => {
+    document.querySelectorAll('.chip[data-filter]').forEach(c => c.classList.remove('active'));
+    chip.classList.add('active');
+    currentFilter = chip.dataset.filter;
+    render();
+  });
+});
+
+document.getElementById('sortSelect').addEventListener('change', (e) => {
+  currentSort = e.target.value;
+  render();
+});
+
+document.getElementById('search').addEventListener('input', (e) => {
+  searchTerm = e.target.value.toLowerCase();
+  render();
+});
+
+document.getElementById('addToggle').addEventListener('click', () => {
+  document.getElementById('addForm').classList.toggle('open');
+});
+
+document.getElementById('saveBtn').addEventListener('click', async () => {
+  if (!dbRef) return;
+  const name = document.getElementById('f_name').value.trim();
+  if (!name) { document.getElementById('f_name').focus(); return; }
+  const newWine = {
+    name: name,
+    grape: document.getElementById('f_grape').value.trim(),
+    region: document.getElementById('f_region').value.trim(),
+    year: parseInt(document.getElementById('f_year').value) || null,
+    status: document.getElementById('f_status').value,
+    window: document.getElementById('f_window').value.trim(),
+    drunk: false
+  };
+  try {
+    await dbRef.collection('wines').add(newWine);
+    ['f_name','f_grape','f_region','f_year','f_window'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('addForm').classList.remove('open');
+  } catch (err) {
+    showNotice('Fles kon niet worden toegevoegd. Probeer opnieuw.');
+  }
+});
+
+function showNotice(msg) {
+  document.getElementById('noticeBox').innerHTML = `<div class="notice">${escapeHtml(msg)}</div>`;
+}
+
+async function init() {
+  let db = null;
+  try {
+    db = await claude.use('db');
+  } catch (e) {
+    db = null;
+  }
+
+  if (!db) {
+    document.getElementById('headerCount').textContent = 'Delen niet beschikbaar in deze weergave';
+    showNotice('Kan niet verbinden met de gedeelde lijst. Open deze app via de gedeelde link om de gezamenlijke wijnvoorraad te zien en te bewerken.');
+    return;
+  }
+
+  dbRef = db;
+
+  try {
+    const user = await claude.use('user');
+    if (user) {
+      const canWrite = await user.can('data.write');
+      if (canWrite === false) writable = false;
+    }
+  } catch (e) {}
+
+  document.getElementById('syncBadge').textContent = '🔄 Live gedeeld';
+
+  db.collection('wines').onSnapshot((snap) => {
+    wines = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    render();
+  }, (err) => {
+    showNotice('Verbinding met de gedeelde lijst verbroken. Herlaad de pagina.');
+  });
+}
+
+init();
+</script>
+</body>
+</html>
