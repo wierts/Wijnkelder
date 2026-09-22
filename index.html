@@ -3,134 +3,163 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Wijnkelder">
 <title>Wijnvoorraad</title>
 <style>
   :root {
-    --bg: #faf7f2;
-    --card-bg: #ffffff;
-    --text: #2a2320;
-    --text-dim: #746a63;
-    --border: #e4dcd3;
+    --bg: #efe8dc;
+    --card-bg: #fffdfa;
+    --card-bg-soft: rgba(255,253,250,0.95);
+    --text: #241f1c;
+    --text-dim: #6f665f;
+    --border: #e2d9cc;
     --accent: #7b1e2b;
-    --accent-light: #f4e6e8;
+    --accent-strong: #5c1620;
+    --accent-tint: #f4e6e8;
     --now: #b23a2e;
     --now-bg: #fbe7e4;
-    --soon: #b8860b;
+    --soon: #9c6a0a;
     --soon-bg: #fbf1dc;
     --wait: #3f7d4f;
     --wait-bg: #e5f2e8;
-    --drunk: #9c9188;
+    --drunk: #8f867d;
     --drunk-bg: #efece8;
+    --overlay-1: rgba(16,10,8,0.60);
+    --overlay-2: rgba(16,10,8,0.78);
     --radius: 14px;
+    --radius-sm: 10px;
     box-sizing: border-box;
     padding-top: env(safe-area-inset-top, 0px);
     padding-bottom: env(safe-area-inset-bottom, 0px);
   }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
-      --bg: #1b1815;
-      --card-bg: #262220;
-      --text: #f0ebe6;
-      --text-dim: #b5aaa1;
-      --border: #3a3430;
-      --accent: #d97b86;
-      --accent-light: #3a2226;
-      --now: #e8837a;
-      --now-bg: #3a2220;
-      --soon: #e0b64c;
-      --soon-bg: #3a3020;
-      --wait: #7fc491;
-      --wait-bg: #1f3324;
-      --drunk: #8a8078;
-      --drunk-bg: #2c2825;
+      --bg: #16130f;
+      --card-bg: #221d19;
+      --card-bg-soft: rgba(34,29,25,0.92);
+      --text: #f1ece5;
+      --text-dim: #b3a89e;
+      --border: #3a332c;
+      --accent: #e59aa2;
+      --accent-strong: #f0b3ba;
+      --accent-tint: #3a2226;
+      --now: #e8837a; --now-bg: #3a2220;
+      --soon: #e0b64c; --soon-bg: #3a3020;
+      --wait: #7fc491; --wait-bg: #1f3324;
+      --drunk: #948a80; --drunk-bg: #2c2825;
+      --overlay-1: rgba(6,4,3,0.68);
+      --overlay-2: rgba(6,4,3,0.85);
     }
   }
   :root[data-theme="dark"] {
-    --bg: #1b1815;
-    --card-bg: #262220;
-    --text: #f0ebe6;
-    --text-dim: #b5aaa1;
-    --border: #3a3430;
-    --accent: #d97b86;
-    --accent-light: #3a2226;
-    --now: #e8837a;
-    --now-bg: #3a2220;
-    --soon: #e0b64c;
-    --soon-bg: #3a3020;
-    --wait: #7fc491;
-    --wait-bg: #1f3324;
-    --drunk: #8a8078;
-    --drunk-bg: #2c2825;
+    --bg: #16130f;
+    --card-bg: #221d19;
+    --card-bg-soft: rgba(34,29,25,0.92);
+    --text: #f1ece5;
+    --text-dim: #b3a89e;
+    --border: #3a332c;
+    --accent: #e59aa2;
+    --accent-strong: #f0b3ba;
+    --accent-tint: #3a2226;
+    --now: #e8837a; --now-bg: #3a2220;
+    --soon: #e0b64c; --soon-bg: #3a3020;
+    --wait: #7fc491; --wait-bg: #1f3324;
+    --drunk: #948a80; --drunk-bg: #2c2825;
+    --overlay-1: rgba(6,4,3,0.68);
+    --overlay-2: rgba(6,4,3,0.85);
   }
   html { scroll-padding-top: env(safe-area-inset-top, 0px); }
   * { box-sizing: border-box; }
   body {
     margin: 0;
-    background-color: var(--bg);
-    background-image: linear-gradient(rgba(250,247,242,0.55), rgba(250,247,242,0.55)), url('img/wijnkelder-achtergrond.jpg');
-    background-size: cover;
-    background-position: center center;
-    background-attachment: scroll;
-    background-repeat: no-repeat;
+    min-height: 100%;
+    background: var(--bg);
     color: var(--text);
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     -webkit-font-smoothing: antialiased;
-    min-height: 100vh;
+    position: relative;
   }
-  @media (prefers-color-scheme: dark) {
-    :root:not([data-theme="light"]) body {
-      background-image: linear-gradient(rgba(27,24,21,0.55), rgba(27,24,21,0.55)), url('img/wijnkelder-achtergrond.jpg');
-    }
+  /* Background photo: darkened (~28%) + dark overlay, isolated behind everything.
+     If this rule (or the image file) is ever removed, body's solid --bg keeps the page usable. */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -2;
+    background-image: url('img/wijnkelder-achtergrond.jpg');
+    background-size: cover;
+    background-position: center 30%;
+    background-repeat: no-repeat;
+    filter: brightness(0.72) saturate(0.88);
   }
-  :root[data-theme="dark"] body {
-    background-image: linear-gradient(rgba(27,24,21,0.55), rgba(27,24,21,0.55)), url('img/wijnkelder-achtergrond.jpg');
+  body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    background: linear-gradient(180deg, var(--overlay-1), var(--overlay-2));
   }
   header {
     padding: env(safe-area-inset-top, 0px) 16px 0;
     background: var(--accent);
     color: #fff;
   }
-  .header-inner { padding: 14px 0 16px; max-width: 720px; margin: 0 auto; }
-  h1 { font-size: 1.3rem; margin: 0 0 2px; font-weight: 700; }
-  .subtitle { font-size: 0.82rem; opacity: 0.85; }
-  .sync-badge { font-size: 0.72rem; opacity: 0.8; margin-top: 4px; }
-  .container { max-width: 720px; margin: 0 auto; padding: 14px 16px 40px; }
+  .header-inner { padding: 10px 0 12px; max-width: 720px; margin: 0 auto; }
+  h1 { font-size: 1.14rem; margin: 0 0 2px; font-weight: 700; letter-spacing: -0.01em; }
+  .subtitle { font-size: 0.8rem; opacity: 0.9; }
+  .container { max-width: 720px; margin: 0 auto; padding: 14px 16px 48px; }
 
-  .controls {
+  /* --- filter / stat strip --- */
+  .filterbar {
     position: sticky;
     top: env(safe-area-inset-top, 0px);
-    background: var(--bg);
-    z-index: 5;
-    padding: 10px 0 8px;
+    z-index: 6;
+    background: var(--card-bg-soft);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    border-bottom: 1px solid var(--border);
+    margin: 0 -16px 16px;
+    padding: 10px 16px 8px;
+  }
+  .tile-row {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding-bottom: 2px;
+  }
+  .tile-row::-webkit-scrollbar { display: none; }
+  .tile {
+    flex: 0 0 auto;
     display: flex;
     flex-direction: column;
-    gap: 8px;
-  }
-  .search {
-    width: 100%;
-    padding: 9px 12px;
-    border-radius: 10px;
+    align-items: flex-start;
+    gap: 2px;
     border: 1px solid var(--border);
     background: var(--card-bg);
     color: var(--text);
-    font-size: 0.92rem;
-  }
-  .row { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
-  .chip {
-    border: 1px solid var(--border);
-    background: var(--card-bg);
-    color: var(--text-dim);
-    border-radius: 999px;
-    padding: 6px 12px;
-    font-size: 0.8rem;
+    border-radius: 12px;
+    padding: 7px 13px;
+    font-size: 0.78rem;
     cursor: pointer;
-    white-space: nowrap;
+    min-width: 64px;
+    text-align: left;
   }
-  .chip.active { background: var(--accent); color: #fff; border-color: var(--accent); }
-  select {
+  .tile .n { font-size: 1rem; font-weight: 700; line-height: 1.1; }
+  .tile .l { color: var(--text-dim); white-space: nowrap; }
+  .tile.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .tile.active .l { color: rgba(255,255,255,0.85); }
+  .tile:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible, [tabindex]:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+  .filter-meta-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 8px;
+  }
+  select.sort {
     border: 1px solid var(--border);
     background: var(--card-bg);
     color: var(--text);
@@ -138,19 +167,113 @@
     padding: 6px 8px;
     font-size: 0.8rem;
   }
-  .count { font-size: 0.78rem; color: var(--text-dim); margin-left: auto; }
+  .result-count { font-size: 0.78rem; color: var(--text-dim); margin-left: auto; }
 
-  .card {
-    background: var(--card-bg);
+  /* --- search sections --- */
+  section.search-block { margin-bottom: 22px; }
+  .search-block + .search-block { margin-top: 26px; }
+  .search-card {
+    background: var(--card-bg-soft);
+    backdrop-filter: blur(4px);
     border: 1px solid var(--border);
     border-radius: var(--radius);
-    padding: 13px 14px;
+    padding: 16px;
+  }
+  .search-card.primary {
+    background: linear-gradient(var(--card-bg-soft), var(--card-bg-soft)), linear-gradient(120deg, var(--accent-tint), transparent);
+    border-color: var(--accent-tint);
+  }
+  .search-card h2 {
+    font-size: 0.98rem;
+    margin: 0 0 3px;
+    font-weight: 700;
+  }
+  .search-card .lead { font-size: 0.78rem; color: var(--text-dim); margin: 0 0 12px; }
+  .field-label {
+    display: block;
+    font-size: 0.76rem;
+    font-weight: 600;
+    color: var(--text-dim);
+    margin-bottom: 5px;
+  }
+  .pairing-row { display: flex; gap: 8px; }
+  .pairing-row input, .inv-search input {
+    flex: 1;
+    width: 100%;
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--card-bg);
+    color: var(--text);
+    font-size: 0.92rem;
+  }
+  .pairing-row button {
+    padding: 10px 16px;
+    border-radius: 10px;
+    border: none;
+    background: var(--accent);
+    color: #fff;
+    font-weight: 600;
+    font-size: 0.86rem;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .pairing-row button:hover { background: var(--accent-strong); }
+  .example-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+  .example-chip {
+    border: 1px solid var(--border);
+    background: var(--card-bg);
+    color: var(--text-dim);
+    border-radius: 999px;
+    padding: 5px 12px;
+    font-size: 0.78rem;
+    cursor: pointer;
+  }
+  .example-chip:hover { border-color: var(--accent); color: var(--accent); }
+  .surprise-btn {
+    margin-top: 10px;
+    border: 1px dashed var(--accent);
+    background: transparent;
+    color: var(--accent);
+    border-radius: 10px;
+    padding: 8px 14px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .surprise-btn:hover { background: var(--accent-tint); }
+  .pairing-results { margin-top: 14px; display: flex; flex-direction: column; gap: 10px; }
+  .pairing-card { border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; background: var(--card-bg); }
+  .pairing-card .card-top { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; }
+  .pairing-card .card-title { font-weight: 700; font-size: 0.94rem; }
+  .pairing-card .card-sub { font-size: 0.79rem; color: var(--text-dim); margin-top: 2px; }
+  .pairing-why { font-size: 0.79rem; color: var(--accent); margin-top: 7px; }
+  .pairing-empty, .pairing-more-hint { font-size: 0.83rem; color: var(--text-dim); margin-top: 10px; }
+  .pairing-more-btn {
+    margin-top: 4px; background: none; border: none; color: var(--accent);
+    font-size: 0.8rem; font-weight: 600; cursor: pointer; padding: 4px 0;
+  }
+
+  /* --- wine cards --- */
+  #list { margin-top: 4px; }
+  .card {
+    background: var(--card-bg-soft);
+    backdrop-filter: blur(4px);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 15px;
     margin-bottom: 10px;
   }
-  .card.drunk-item { opacity: 0.55; }
+  .card.drunk-item { opacity: 0.6; }
   .card-top { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; }
-  .card-title { font-weight: 700; font-size: 0.97rem; line-height: 1.3; }
-  .card-sub { font-size: 0.82rem; color: var(--text-dim); margin-top: 2px; }
+  .producer-link {
+    background: none; border: none; padding: 0; margin: 0 0 2px; display: block;
+    font-size: 0.72rem; font-weight: 700; color: var(--accent);
+    letter-spacing: 0.03em; cursor: pointer; text-align: left;
+  }
+  .producer-link:hover { text-decoration: underline; }
+  .card-title { font-weight: 700; font-size: 1.04rem; line-height: 1.3; }
+  .card-sub { font-size: 0.83rem; color: var(--text-dim); margin-top: 2px; }
   .badge {
     font-size: 0.72rem;
     font-weight: 700;
@@ -163,284 +286,273 @@
   .badge.soon { background: var(--soon-bg); color: var(--soon); }
   .badge.wait { background: var(--wait-bg); color: var(--wait); }
   .badge.drunk { background: var(--drunk-bg); color: var(--drunk); }
-  .window { font-size: 0.8rem; margin-top: 7px; color: var(--text); }
-  .actions { display: flex; gap: 8px; margin-top: 9px; }
-  .btn {
-    font-size: 0.76rem;
-    border: 1px solid var(--border);
-    background: transparent;
-    color: var(--text-dim);
-    border-radius: 8px;
-    padding: 5px 10px;
-    cursor: pointer;
-  }
-  .btn:hover { background: var(--accent-light); color: var(--accent); }
-  .btn.danger:hover { background: var(--now-bg); color: var(--now); }
-  .btn:disabled { opacity: 0.4; cursor: default; }
 
-  .add-toggle {
-    width: 100%;
-    padding: 11px;
-    border-radius: 10px;
-    background: var(--accent);
-    color: #fff;
-    border: none;
-    font-size: 0.9rem;
-    font-weight: 600;
-    cursor: pointer;
-    margin: 6px 0 14px;
-  }
-  .add-form {
-    display: none;
-    background: var(--card-bg);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 14px;
-    margin-bottom: 14px;
-  }
-  .add-form.open { display: block; }
-  .add-form label { font-size: 0.76rem; color: var(--text-dim); display: block; margin: 8px 0 3px; }
-  .add-form input, .add-form select {
-    width: 100%;
-    padding: 8px 10px;
-    border-radius: 8px;
-    border: 1px solid var(--border);
-    background: var(--bg);
-    color: var(--text);
-    font-size: 0.88rem;
-  }
-  .add-form .save-btn {
-    margin-top: 12px;
-    width: 100%;
-    padding: 10px;
-    border-radius: 8px;
-    border: none;
-    background: var(--wait);
-    color: #fff;
-    font-weight: 600;
-    cursor: pointer;
-  }
-  .qty-row { display: flex; align-items: center; gap: 8px; margin-top: 9px; }
-  .qty-label { font-size: 0.78rem; color: var(--text-dim); }
+  .card-meta { margin-top: 10px; display: flex; flex-direction: column; gap: 4px; }
+  .meta-row { display: flex; align-items: center; gap: 6px; font-size: 0.84rem; flex-wrap: wrap; }
+  .meta-row .meta-label { color: var(--text-dim); font-size: 0.76rem; min-width: 82px; flex-shrink: 0; }
+  .qty-stepper { display: flex; align-items: center; gap: 8px; }
   .qty-btn {
-    width: 26px; height: 26px; border-radius: 8px; border: 1px solid var(--border);
-    background: var(--bg); color: var(--text); font-size: 0.9rem; cursor: pointer;
+    width: 30px; height: 30px; border-radius: 8px; border: 1px solid var(--border);
+    background: var(--card-bg); color: var(--text); font-size: 1rem; cursor: pointer;
     display: flex; align-items: center; justify-content: center;
   }
-  .qty-btn:hover { background: var(--accent-light); color: var(--accent); }
+  .qty-btn:hover { background: var(--accent-tint); color: var(--accent); }
   .qty-btn:disabled { opacity: 0.4; cursor: default; }
-  .qty-value { font-size: 0.85rem; font-weight: 700; min-width: 18px; text-align: center; }
-  .pairing-box {
-    background: var(--card-bg); border: 1px solid var(--border); border-radius: var(--radius);
-    padding: 16px; margin: 14px 0 18px;
+  .qty-value { font-size: 0.88rem; font-weight: 700; min-width: 20px; text-align: center; }
+
+  .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; }
+  .btn {
+    font-size: 0.8rem;
+    border: 1px solid var(--border);
+    background: var(--card-bg);
+    color: var(--text-dim);
+    border-radius: 9px;
+    padding: 8px 12px;
+    cursor: pointer;
+    min-height: 38px;
   }
-  .pairing-box label { font-weight: 700; font-size: 0.95rem; display: block; margin-bottom: 8px; }
-  .pairing-row { display: flex; gap: 8px; }
-  .pairing-row input {
-    flex: 1; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border);
-    background: var(--bg); color: var(--text); font-size: 0.92rem;
+  .btn:hover { background: var(--accent-tint); color: var(--accent); }
+  .btn.primary { border-color: var(--wait); color: var(--wait); font-weight: 600; }
+  .btn.primary:hover { background: var(--wait-bg); }
+  .btn.ghost-danger { color: var(--text-dim); border-color: var(--border); background: transparent; margin-left: auto; }
+  .btn.ghost-danger:hover { background: var(--now-bg); color: var(--now); border-color: var(--now-bg); }
+  .btn:disabled { opacity: 0.4; cursor: default; }
+
+  .detail-panel { display: none; margin-top: 11px; padding-top: 11px; border-top: 1px solid var(--border); }
+  .detail-panel.open { display: block; }
+  .detail-section { margin-bottom: 10px; }
+  .detail-section:last-child { margin-bottom: 0; }
+  .detail-section h4 { margin: 0 0 4px; font-size: 0.76rem; color: var(--text-dim); font-weight: 700; }
+  .detail-section p { margin: 0 0 6px; font-size: 0.86rem; line-height: 1.45; }
+  .detail-list { margin: 0; padding-left: 18px; font-size: 0.86rem; line-height: 1.55; }
+
+  .empty { text-align: center; color: var(--text-dim); padding: 34px 16px; font-size: 0.9rem; background: var(--card-bg-soft); border-radius: var(--radius); border: 1px solid var(--border); }
+
+  /* --- import section --- */
+  .import-section { margin-top: 26px; }
+  .import-toggle {
+    width: 100%;
+    text-align: left;
+    background: var(--card-bg-soft);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 11px 14px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-dim);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
   }
-  .pairing-row button {
-    padding: 10px 16px; border-radius: 10px; border: none; background: var(--accent);
-    color: #fff; font-weight: 600; font-size: 0.88rem; cursor: pointer; white-space: nowrap;
+  .import-toggle .chev { transition: transform 0.15s ease; }
+  .import-toggle[aria-expanded="true"] .chev { transform: rotate(180deg); }
+  .import-body {
+    display: none;
+    border: 1px solid var(--border);
+    border-top: none;
+    border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+    padding: 14px;
+    background: var(--card-bg-soft);
   }
-  .pairing-hint { font-size: 0.74rem; color: var(--text-dim); margin-top: 8px; }
-  .pairing-results { margin-top: 14px; display: flex; flex-direction: column; gap: 10px; }
-  .pairing-card { border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; background: var(--bg); }
-  .pairing-card .card-top { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; }
-  .pairing-card .card-title { font-weight: 700; font-size: 0.95rem; }
-  .pairing-card .card-sub { font-size: 0.8rem; color: var(--text-dim); margin-top: 2px; }
-  .pairing-why { font-size: 0.78rem; color: var(--accent); margin-top: 6px; }
-  .pairing-empty { font-size: 0.85rem; color: var(--text-dim); margin-top: 10px; }
-  .bulk-toggle {
-    width: 100%; padding: 11px; border-radius: 10px; background: var(--wait); color: #fff;
-    border: none; font-size: 0.9rem; font-weight: 600; cursor: pointer; margin: 0 0 14px;
+  .import-body.open { display: block; }
+  .import-tabs { display: flex; gap: 6px; margin-bottom: 12px; }
+  .import-tab {
+    flex: 1;
+    border: 1px solid var(--border);
+    background: var(--card-bg);
+    color: var(--text-dim);
+    border-radius: 9px;
+    padding: 8px;
+    font-size: 0.8rem;
+    cursor: pointer;
   }
-  .bulk-form {
-    display: none; background: var(--card-bg); border: 1px solid var(--border);
-    border-radius: var(--radius); padding: 14px; margin-bottom: 14px;
+  .import-tab.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .import-panel { display: none; }
+  .import-panel.open { display: block; }
+  .import-panel label { font-size: 0.76rem; color: var(--text-dim); display: block; margin: 8px 0 3px; }
+  .import-panel input, .import-panel select, .import-panel textarea {
+    width: 100%; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--border);
+    background: var(--card-bg); color: var(--text); font-size: 0.88rem; font-family: inherit;
   }
-  .bulk-form.open { display: block; }
-  .bulk-form textarea {
-    width: 100%; min-height: 140px; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--border);
-    background: var(--bg); color: var(--text); font-size: 0.78rem; font-family: ui-monospace, monospace; resize: vertical;
-  }
-  .bulk-hint { font-size: 0.74rem; color: var(--text-dim); margin-top: 8px; line-height: 1.4; }
-  .bulk-form .save-btn {
+  .import-panel textarea { resize: vertical; }
+  .import-panel textarea.mono { min-height: 130px; font-family: ui-monospace, monospace; font-size: 0.78rem; }
+  .import-hint { font-size: 0.74rem; color: var(--text-dim); margin-top: 8px; line-height: 1.4; }
+  .save-btn {
     margin-top: 12px; width: 100%; padding: 10px; border-radius: 8px; border: none;
     background: var(--wait); color: #fff; font-weight: 600; cursor: pointer;
   }
-  .producer-link {
-    background: none; border: none; padding: 0; margin: 0 0 2px;
-    font-size: 0.76rem; font-weight: 700; color: var(--accent);
-    text-transform: uppercase; letter-spacing: 0.02em; cursor: pointer; text-align: left;
-  }
-  .producer-link:hover { text-decoration: underline; }
+  .save-btn:disabled { opacity: 0.6; cursor: default; }
+
+  /* --- modal (producer + confirm) --- */
   .modal-overlay {
-    display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45);
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5);
     z-index: 50; align-items: flex-end; justify-content: center;
   }
   .modal-overlay.open { display: flex; }
   .modal-box {
-    background: var(--card-bg); width: 100%; max-width: 720px;
-    border-radius: 16px 16px 0 0; padding: 18px 18px calc(18px + env(safe-area-inset-bottom, 0px));
+    background: var(--card-bg); width: 100%; max-width: 480px;
+    border-radius: 16px 16px 0 0; padding: 20px 20px calc(20px + env(safe-area-inset-bottom, 0px));
     max-height: 82vh; overflow-y: auto;
+  }
+  @media (min-width: 560px) {
+    .modal-overlay { align-items: center; }
+    .modal-box { border-radius: 16px; }
   }
   .modal-close {
     float: right; border: none; background: transparent; color: var(--text-dim);
-    font-size: 1.1rem; cursor: pointer; padding: 4px 6px; line-height: 1;
+    font-size: 1.1rem; cursor: pointer; padding: 4px 6px; line-height: 1; min-width: 32px; min-height: 32px;
   }
-  .modal-box h3 { margin: 0 0 2px; font-size: 1.05rem; }
+  .modal-box h3 { margin: 0 0 6px; font-size: 1.05rem; }
   .modal-region { font-size: 0.8rem; color: var(--text-dim); margin-bottom: 10px; }
   .modal-desc { font-size: 0.88rem; line-height: 1.5; margin: 0 0 14px; white-space: pre-line; }
-  .modal-wines-title { font-size: 0.76rem; text-transform: uppercase; letter-spacing: 0.03em; color: var(--text-dim); margin-bottom: 6px; }
+  .modal-wines-title { font-size: 0.76rem; color: var(--text-dim); margin-bottom: 6px; font-weight: 700; }
   .modal-wine-item { font-size: 0.85rem; padding: 6px 0; border-top: 1px solid var(--border); }
   .modal-wine-item:first-child { border-top: none; }
-  .empty { text-align: center; color: var(--text-dim); padding: 30px 0; font-size: 0.88rem; }
-  .notice {
-    background: var(--soon-bg);
-    color: var(--soon);
-    border-radius: 10px;
-    padding: 10px 12px;
-    font-size: 0.8rem;
-    margin-bottom: 10px;
+  .confirm-actions { display: flex; gap: 10px; margin-top: 16px; }
+  .confirm-actions .btn { flex: 1; text-align: center; min-height: 44px; }
+  .confirm-actions .btn.danger-fill { background: var(--now); border-color: var(--now); color: #fff; font-weight: 600; }
+  .confirm-actions .btn.danger-fill:hover { background: #96271d; }
+
+  /* --- toast --- */
+  #toast {
+    position: fixed; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom, 0px));
+    transform: translateX(-50%) translateY(12px);
+    background: #2a2320; color: #f5f0ea; font-size: 0.84rem;
+    padding: 11px 18px; border-radius: 999px; z-index: 60;
+    opacity: 0; pointer-events: none; transition: opacity 0.2s ease, transform 0.2s ease;
+    max-width: 90vw; text-align: center;
   }
-  .add-form textarea {
-    width: 100%;
-    padding: 8px 10px;
-    border-radius: 8px;
-    border: 1px solid var(--border);
-    background: var(--bg);
-    color: var(--text);
-    font-size: 0.88rem;
-    font-family: inherit;
-    resize: vertical;
+  #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  #noticeBox .notice {
+    background: var(--soon-bg); color: var(--soon); border-radius: 10px;
+    padding: 10px 12px; font-size: 0.8rem; margin-bottom: 12px;
   }
-  .detail-toggle {
-    margin-top: 9px;
-    font-size: 0.76rem;
-    border: 1px solid var(--border);
-    background: transparent;
-    color: var(--accent);
-    border-radius: 8px;
-    padding: 5px 10px;
-    cursor: pointer;
+
+  @media (max-width: 480px) {
+    .card-title { font-size: 1rem; }
+    .actions { gap: 8px; }
+    .btn { flex: 1 1 auto; min-width: 0; }
+    .btn.ghost-danger { flex: 1 1 100%; margin-left: 0; }
   }
-  .detail-panel {
-    display: none;
-    margin-top: 10px;
-    padding-top: 10px;
-    border-top: 1px solid var(--border);
-  }
-  .detail-panel.open { display: block; }
-  .detail-section { margin-bottom: 10px; }
-  .detail-section:last-child { margin-bottom: 0; }
-  .detail-section h4 {
-    margin: 0 0 4px;
-    font-size: 0.78rem;
-    text-transform: uppercase;
-    letter-spacing: 0.03em;
-    color: var(--text-dim);
-  }
-  .detail-section p {
-    margin: 0 0 6px;
-    font-size: 0.86rem;
-    line-height: 1.45;
-  }
-  .detail-section p:last-child { margin-bottom: 0; }
-  .detail-list {
-    margin: 0;
-    padding-left: 18px;
-    font-size: 0.86rem;
-    line-height: 1.5;
-  }
-  .detail-list li { margin-bottom: 2px; }
 </style>
 </head>
 <body>
+
 <header>
   <div class="header-inner">
     <h1>🍷 Wijnvoorraad</h1>
     <div class="subtitle" id="headerCount">Laden…</div>
-    <div class="sync-badge" id="syncBadge"></div>
   </div>
 </header>
 
 <div class="container">
-  <div id="noticeBox"></div>
 
-  <div class="pairing-box">
-    <label>🍽️ Wat eten we vanavond?</label>
-    <div class="pairing-row">
-      <input id="pairingInput" placeholder="bv. steak, zalm, pasta, sushi, kaasplankje...">
-      <button id="pairingBtn">Zoek</button>
-    </div>
-    <div class="pairing-hint">Typ een gerecht of ingrediënt — ik zoek de beste match uit je kelder, met voorrang voor flessen die toch al 'Nu drinken' zijn.</div>
-    <div class="pairing-results" id="pairingResults"></div>
-  </div>
-
-  <div class="controls">
-    <input class="search" id="search" placeholder="Zoek op naam, druif, regio...">
-    <div class="row">
-      <button class="chip active" data-filter="all">Alle</button>
-      <button class="chip" data-filter="now">Nu drinken</button>
-      <button class="chip" data-filter="soon">Binnenkort</button>
-      <button class="chip" data-filter="wait">Kan wachten</button>
-      <button class="chip" data-filter="drunk">Opgedronken</button>
-      <select id="sortSelect">
+  <div class="filterbar">
+    <div class="tile-row" id="tileRow" role="group" aria-label="Filter op status"></div>
+    <div class="filter-meta-row">
+      <select class="sort" id="sortSelect" aria-label="Sorteren">
         <option value="statusYear">Status → jaar</option>
         <option value="yearAsc">Jaargang oud → nieuw</option>
         <option value="yearDesc">Jaargang nieuw → oud</option>
         <option value="name">Naam A-Z</option>
+        <option value="producer">Producent</option>
+        <option value="qty">Voorraad</option>
       </select>
+      <span class="result-count" id="resultCount"></span>
     </div>
-    <div class="row"><span class="count" id="resultCount"></span></div>
   </div>
 
-  <button class="add-toggle" id="addToggle">+ Fles toevoegen</button>
-  <div class="add-form" id="addForm">
-    <label>Producent</label>
-    <input id="f_producer" placeholder="bv. Château Voorbeeld">
-    <label>Naam / cuvée *</label>
-    <input id="f_name" placeholder="bv. Grand Vin">
-    <label>Druif / stijl</label>
-    <input id="f_grape" placeholder="bv. Chardonnay">
-    <label>Regio / land</label>
-    <input id="f_region" placeholder="bv. Bourgogne, Frankrijk">
-    <label>Jaargang</label>
-    <input id="f_year" type="number" placeholder="bv. 2019">
-    <label>Status</label>
-    <select id="f_status">
-      <option value="now">Nu drinken</option>
-      <option value="soon">Binnenkort</option>
-      <option value="wait">Kan wachten</option>
-    </select>
-    <label>Drinkvenster / notitie</label>
-    <input id="f_window" placeholder="bv. tot 2030">
-    <label>Karakter</label>
-    <textarea id="f_character" rows="4" placeholder="Beschrijving van smaak, stijl, druivenmix..."></textarea>
-    <label>Openen &amp; serveren (één tip per regel)</label>
-    <textarea id="f_serving" rows="4" placeholder="Serveer op 16-18°C&#10;Karaffeer 30 minuten..."></textarea>
-    <label>Aantal flessen</label>
-    <input id="f_qty" type="number" min="1" value="1">
-    <button class="save-btn" id="saveBtn">Opslaan</button>
-  </div>
+  <div id="noticeBox" aria-live="polite"></div>
 
-  <button class="bulk-toggle" id="bulkToggle">📋 Meerdere flessen plakken (vanuit Claude-chat)</button>
-  <div class="bulk-form" id="bulkForm">
-    <label>Plak hier de JSON die Claude je gaf na het herkennen van je foto's</label>
-    <textarea id="bulkInput" placeholder='[&#10;  {"name":"...", "grape":"...", "region":"...", "year":2020, "status":"now", "window":"Nu drinken", "qty":1}&#10;]'></textarea>
-    <div class="bulk-hint">Stuur je flessenfoto's gewoon in de Claude-chat zoals eerder — Claude herkent de wijn, bepaalt het drinkvenster, en geeft je een blokje JSON terug dat je hier plakt.</div>
-    <button class="save-btn" id="bulkSaveBtn">Toevoegen aan kelder</button>
-  </div>
+  <section class="search-block">
+    <div class="search-card primary">
+      <h2>Wijn kiezen bij een gerecht</h2>
+      <p class="lead">Typ wat je eet — ik zoek de beste match uit je kelder, met voorrang voor flessen die toch al 'Nu drinken' zijn.</p>
+      <label class="field-label" for="pairingInput">Gerecht of ingrediënt</label>
+      <div class="pairing-row">
+        <input id="pairingInput" placeholder="bv. steak, zalm, pasta, sushi of kaas">
+        <button id="pairingBtn">Zoek wijn</button>
+      </div>
+      <div class="example-chips" id="exampleChips"></div>
+      <button class="surprise-btn" id="surpriseBtn">🎲 Verras me</button>
+      <div class="pairing-results" id="pairingResults"></div>
+    </div>
+  </section>
+
+  <section class="search-block">
+    <div class="search-card">
+      <h2>Doorzoek je wijnvoorraad</h2>
+      <label class="field-label" for="search">Zoekterm</label>
+      <div class="inv-search">
+        <input id="search" placeholder="Zoek op naam, druif, producent, regio of jaargang">
+      </div>
+    </div>
+  </section>
 
   <div id="list"></div>
   <div class="empty" id="emptyMsg" style="display:none;">Geen flessen gevonden.</div>
+
+  <div class="import-section">
+    <button class="import-toggle" id="importToggle" aria-expanded="false" aria-controls="importBody">
+      <span>📥 Importeren</span>
+      <span class="chev" aria-hidden="true">▾</span>
+    </button>
+    <div class="import-body" id="importBody">
+      <div class="import-tabs">
+        <button class="import-tab active" data-tab="single" type="button">Fles toevoegen</button>
+        <button class="import-tab" data-tab="bulk" type="button">Meerdere plakken (Claude-chat)</button>
+      </div>
+
+      <div class="import-panel open" id="panel-single">
+        <label for="f_producer">Producent</label>
+        <input id="f_producer" placeholder="bv. Château Voorbeeld">
+        <label for="f_name">Naam / cuvée *</label>
+        <input id="f_name" placeholder="bv. Grand Vin">
+        <label for="f_grape">Druif / stijl</label>
+        <input id="f_grape" placeholder="bv. Chardonnay">
+        <label for="f_region">Regio / land</label>
+        <input id="f_region" placeholder="bv. Bourgogne, Frankrijk">
+        <label for="f_year">Jaargang</label>
+        <input id="f_year" type="number" placeholder="bv. 2019">
+        <label for="f_status">Status</label>
+        <select id="f_status">
+          <option value="now">Nu drinken</option>
+          <option value="soon">Binnenkort</option>
+          <option value="wait">Kan wachten</option>
+        </select>
+        <label for="f_window">Drinkvenster / notitie</label>
+        <input id="f_window" placeholder="bv. tot 2030">
+        <label for="f_character">Karakter</label>
+        <textarea id="f_character" rows="4" placeholder="Beschrijving van smaak, stijl, druivenmix..."></textarea>
+        <label for="f_serving">Openen &amp; serveren (één tip per regel)</label>
+        <textarea id="f_serving" rows="4" placeholder="Serveer op 16-18°C&#10;Karaffeer 30 minuten..."></textarea>
+        <label for="f_qty">Aantal flessen</label>
+        <input id="f_qty" type="number" min="1" value="1">
+        <button class="save-btn" id="saveBtn">Opslaan</button>
+      </div>
+
+      <div class="import-panel" id="panel-bulk">
+        <label for="bulkInput">Plak hier de JSON die Claude je gaf na het herkennen van je foto's</label>
+        <textarea id="bulkInput" class="mono" placeholder='[&#10;  {"name":"...", "grape":"...", "region":"...", "year":2020, "status":"now", "window":"Nu drinken", "qty":1}&#10;]'></textarea>
+        <div class="import-hint">Stuur je flessenfoto's gewoon in de Claude-chat zoals eerder — Claude herkent de wijn, bepaalt het drinkvenster, en geeft je een blokje JSON terug dat je hier plakt.</div>
+        <button class="save-btn" id="bulkSaveBtn">Toevoegen aan kelder</button>
+      </div>
+    </div>
+  </div>
+
 </div>
 
 <div class="modal-overlay" id="producerModalOverlay">
   <div class="modal-box" id="producerModalBox"></div>
 </div>
+
+<div class="modal-overlay" id="confirmModalOverlay">
+  <div class="modal-box" id="confirmModalBox"></div>
+</div>
+
+<div id="toast" role="status" aria-live="polite"></div>
 
 <script>
 const statusLabel = { now: 'Nu drinken', soon: 'Binnenkort', wait: 'Kan wachten' };
@@ -451,6 +563,7 @@ let producers = [];
 let currentFilter = 'all';
 let currentSort = 'statusYear';
 let searchTerm = '';
+let pendingDeleteId = null;
 const writable = true;
 const API_URL = 'api/wines.php';
 const PRODUCERS_URL = 'api/producers.php';
@@ -470,39 +583,46 @@ async function loadProducers() {
   }
 }
 
-function findProducer(name) {
-  return producers.find(p => p.name === name);
-}
-
-function showProducerModal(name) {
-  const box = document.getElementById('producerModalBox');
-  const overlay = document.getElementById('producerModalOverlay');
-  const info = findProducer(name);
-  const otherWines = wines.filter(w => w.producer === name && !w.drunk);
-  const winesHtml = otherWines.length ? `
-    <div class="modal-wines-title">Flessen van deze producent (${otherWines.length})</div>
-    ${otherWines.map(w => `<div class="modal-wine-item">${escapeHtml(w.name)}${w.year ? ' ' + w.year : ''}</div>`).join('')}
-  ` : '';
-  box.innerHTML = `
-    <button class="modal-close" data-action="closeProducerModal">✕</button>
-    <h3>${escapeHtml(name)}</h3>
-    ${info && info.region ? `<div class="modal-region">${escapeHtml(info.region)}</div>` : ''}
-    <div class="modal-desc">${escapeHtml((info && info.description) || 'Nog geen informatie over deze producent.')}</div>
-    ${winesHtml}
-  `;
-  overlay.classList.add('open');
-}
-
-document.getElementById('producerModalOverlay').addEventListener('click', (e) => {
-  if (e.target.id === 'producerModalOverlay' || e.target.closest('[data-action="closeProducerModal"]')) {
-    document.getElementById('producerModalOverlay').classList.remove('open');
-  }
-});
-
 function escapeHtml(str) {
   const d = document.createElement('div');
   d.textContent = str || '';
   return d.innerHTML;
+}
+
+function counts() {
+  const active = wines.filter(w => !w.drunk);
+  return {
+    total: active.length,
+    now: active.filter(w => w.status === 'now').length,
+    soon: active.filter(w => w.status === 'soon').length,
+    wait: active.filter(w => w.status === 'wait').length,
+    drunk: wines.filter(w => w.drunk).length
+  };
+}
+
+function renderTiles() {
+  const c = counts();
+  const defs = [
+    { key: 'all', label: 'Alle', n: c.total },
+    { key: 'now', label: 'Nu drinken', n: c.now },
+    { key: 'soon', label: 'Binnenkort', n: c.soon },
+    { key: 'wait', label: 'Kan wachten', n: c.wait },
+    { key: 'drunk', label: 'Opgedronken', n: c.drunk }
+  ];
+  const row = document.getElementById('tileRow');
+  row.innerHTML = defs.map(d => `
+    <button class="tile${currentFilter === d.key ? ' active' : ''}" data-filter="${d.key}" aria-pressed="${currentFilter === d.key}" type="button">
+      <span class="n">${d.n}</span>
+      <span class="l">${d.label}</span>
+    </button>
+  `).join('');
+  row.querySelectorAll('.tile').forEach(t => {
+    t.addEventListener('click', () => {
+      currentFilter = t.dataset.filter;
+      render();
+    });
+  });
+  document.getElementById('headerCount').textContent = c.total + ' flessen beschikbaar · ' + c.drunk + ' opgedronken';
 }
 
 const keywordMap = {
@@ -515,7 +635,7 @@ const keywordMap = {
   "schaaldieren":["schaaldieren"], "krab":["schaaldieren"], "scampi":["schaaldieren"],
   "kip":["gevogelte"], "gevogelte":["gevogelte"], "kalkoen":["gevogelte"], "eend":["gevogelte"], "kipfilet":["gevogelte"],
   "pasta":["pasta"], "spaghetti":["pasta"], "lasagne":["pasta"], "risotto":["pasta","romig"], "pizza":["pasta"], "macaroni":["pasta"],
-  "kaas":["kaas"], "geitenkaas":["kaas"], "brie":["kaas"], "parmezaan":["kaas"], "kaasplank":["kaas"],
+  "kaas":["kaas"], "kaasplankje":["kaas"], "geitenkaas":["kaas"], "brie":["kaas"], "parmezaan":["kaas"], "kaasplank":["kaas"],
   "sushi":["aziatisch","vis"], "thai":["aziatisch"], "curry":["aziatisch","kruidig"], "aziatisch":["aziatisch"],
   "wok":["aziatisch"], "indisch":["aziatisch","kruidig"],
   "bbq":["bbq","roodvlees"], "barbecue":["bbq","roodvlees"], "gegrild":["bbq"],
@@ -542,7 +662,7 @@ function findPairings(query) {
   for (const [key, tags] of Object.entries(keywordMap)) {
     if (q.includes(key)) tags.forEach(t => matchedTags.add(t));
   }
-  if (matchedTags.size === 0) return { tags: [], results: [] };
+  if (matchedTags.size === 0) return { tags: [], results: [], rest: [] };
 
   const scored = wines.filter(w => !w.drunk).map(w => {
     const wTags = inferTagsFromGrape(w.grape);
@@ -556,13 +676,38 @@ function findPairings(query) {
     return b.overlap - a.overlap;
   });
 
-  return { tags: [...matchedTags], results: scored.slice(0, 3) };
+  return { tags: [...matchedTags], results: scored.slice(0, 3), rest: scored.slice(3) };
+}
+
+function pairingReason(w, matchedTags) {
+  if (w.status === 'now') return 'Nu op dronk — een goede keuze voor vanavond.';
+  const g = (w.grape || '').toLowerCase();
+  if (matchedTags.includes('vis') && /riesling|chardonnay|sauvignon/.test(g)) return 'Frisse zuren passen goed bij vis.';
+  if (matchedTags.includes('roodvlees')) return 'Deze krachtige rode wijn kan het vlees goed aan.';
+  if (matchedTags.includes('kaas')) return 'Rijpe body en structuur passen bij een kaasplankje.';
+  if (matchedTags.includes('aziatisch')) return 'Aromatisch profiel combineert goed met kruidige gerechten.';
+  return 'Past qua stijl bij dit gerecht.';
+}
+
+function pairingCardHtml(w, tags) {
+  return `
+    <div class="pairing-card">
+      <div class="card-top">
+        <div>
+          <div class="card-title">${escapeHtml(w.name)}${w.year ? ' ' + w.year : ''}</div>
+          <div class="card-sub">${escapeHtml(w.grape || '')}${w.grape && w.region ? ' · ' : ''}${escapeHtml(w.region || '')}</div>
+        </div>
+        <span class="badge ${w.status}">${statusLabel[w.status]}</span>
+      </div>
+      <div class="pairing-why">${escapeHtml(pairingReason(w, tags))}</div>
+    </div>
+  `;
 }
 
 function renderPairingResults(query) {
   const box = document.getElementById('pairingResults');
   if (!query.trim()) { box.innerHTML = ''; return; }
-  const { tags, results } = findPairings(query);
+  const { tags, results, rest } = findPairings(query);
   if (tags.length === 0) {
     box.innerHTML = '<div class="pairing-empty">Geen match gevonden voor dit gerecht — probeer een ander woord (bv. "vis", "steak", "pasta").</div>';
     return;
@@ -571,26 +716,152 @@ function renderPairingResults(query) {
     box.innerHTML = '<div class="pairing-empty">Geen fles in de kelder past goed hierbij.</div>';
     return;
   }
-  box.innerHTML = results.map(r => {
-    const w = r.wine;
-    const badgeClass = w.status;
-    const badgeText = statusLabel[w.status];
-    return `
-      <div class="pairing-card">
-        <div class="card-top">
-          <div>
-            <div class="card-title">${escapeHtml(w.name)}${w.year ? ' ' + w.year : ''}</div>
-            <div class="card-sub">${escapeHtml(w.grape || '')}${w.grape && w.region ? ' · ' : ''}${escapeHtml(w.region || '')}</div>
-          </div>
-          <span class="badge ${badgeClass}">${badgeText}</span>
+  const moreHtml = rest.length ? `<button class="pairing-more-btn" id="showMoreBtn" type="button">Toon ${rest.length} overige passende wijn${rest.length === 1 ? '' : 'en'}</button>` : '';
+  box.innerHTML = results.map(r => pairingCardHtml(r.wine, tags)).join('') + moreHtml;
+  if (rest.length) {
+    document.getElementById('showMoreBtn').addEventListener('click', () => {
+      document.getElementById('showMoreBtn').remove();
+      box.insertAdjacentHTML('beforeend', rest.map(r => pairingCardHtml(r.wine, tags)).join(''));
+    });
+  }
+}
+
+document.getElementById('pairingBtn').addEventListener('click', () => {
+  renderPairingResults(document.getElementById('pairingInput').value);
+});
+document.getElementById('pairingInput').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') renderPairingResults(document.getElementById('pairingInput').value);
+});
+
+const EXAMPLES = ['Steak', 'Zalm', 'Pasta', 'Sushi', 'Kaasplankje'];
+document.getElementById('exampleChips').innerHTML = EXAMPLES.map(e => `<button class="example-chip" type="button">${e}</button>`).join('');
+document.querySelectorAll('.example-chip').forEach(chip => {
+  chip.addEventListener('click', () => {
+    document.getElementById('pairingInput').value = chip.textContent;
+    renderPairingResults(chip.textContent);
+  });
+});
+
+document.getElementById('surpriseBtn').addEventListener('click', () => {
+  const active = wines.filter(w => !w.drunk);
+  if (!active.length) { showNotice('Geen flessen beschikbaar om uit te kiezen.'); return; }
+  const nowWines = active.filter(w => w.status === 'now');
+  const pool = nowWines.length ? nowWines : active;
+  const pick = pool[Math.floor(Math.random() * pool.length)];
+  document.getElementById('pairingResults').innerHTML = `
+    <div class="pairing-card">
+      <div class="card-top">
+        <div>
+          <div class="card-title">${escapeHtml(pick.name)}${pick.year ? ' ' + pick.year : ''}</div>
+          <div class="card-sub">${escapeHtml(pick.grape || '')}${pick.grape && pick.region ? ' · ' : ''}${escapeHtml(pick.region || '')}</div>
         </div>
-        <div class="pairing-why">Past bij: ${r.tags.filter(t => tags.includes(t)).join(', ')}</div>
+        <span class="badge ${pick.status}">${statusLabel[pick.status]}</span>
       </div>
-    `;
-  }).join('');
+      <div class="pairing-why">🎲 Willekeurig gekozen${pick.status === 'now' ? ' — en toevallig nu op dronk.' : '.'}</div>
+    </div>
+  `;
+});
+
+document.getElementById('search').addEventListener('input', (e) => {
+  searchTerm = e.target.value.toLowerCase();
+  render();
+});
+
+document.getElementById('sortSelect').addEventListener('change', (e) => {
+  currentSort = e.target.value;
+  render();
+});
+
+function findProducer(name) { return producers.find(p => p.name === name); }
+
+function showProducerModal(name) {
+  const box = document.getElementById('producerModalBox');
+  const overlay = document.getElementById('producerModalOverlay');
+  const info = findProducer(name);
+  const otherWines = wines.filter(w => w.producer === name && !w.drunk);
+  const winesHtml = otherWines.length ? `
+    <div class="modal-wines-title">Flessen van deze producent (${otherWines.length})</div>
+    ${otherWines.map(w => `<div class="modal-wine-item">${escapeHtml(w.name)}${w.year ? ' ' + w.year : ''}</div>`).join('')}
+  ` : '';
+  box.innerHTML = `
+    <button class="modal-close" data-action="closeProducerModal" aria-label="Sluiten" type="button">✕</button>
+    <h3>${escapeHtml(name)}</h3>
+    ${info && info.region ? `<div class="modal-region">${escapeHtml(info.region)}</div>` : ''}
+    <div class="modal-desc">${escapeHtml((info && info.description) || 'Nog geen informatie over deze producent.')}</div>
+    ${winesHtml}
+  `;
+  overlay.classList.add('open');
+}
+document.getElementById('producerModalOverlay').addEventListener('click', (e) => {
+  if (e.target.id === 'producerModalOverlay' || e.target.closest('[data-action="closeProducerModal"]')) {
+    document.getElementById('producerModalOverlay').classList.remove('open');
+  }
+});
+
+function openDeleteConfirm(id) {
+  const wine = wines.find(w => String(w.id) === String(id));
+  if (!wine) return;
+  pendingDeleteId = id;
+  const box = document.getElementById('confirmModalBox');
+  box.innerHTML = `
+    <button class="modal-close" data-action="closeConfirmModal" aria-label="Sluiten" type="button">✕</button>
+    <h3>Fles verwijderen</h3>
+    <div class="modal-desc">Weet je zeker dat je <strong>${escapeHtml(wine.name)}${wine.year ? ' ' + wine.year : ''}</strong> wilt verwijderen? Dit kan niet ongedaan worden gemaakt.</div>
+    <div class="confirm-actions">
+      <button class="btn" data-action="closeConfirmModal" type="button">Annuleren</button>
+      <button class="btn danger-fill" id="confirmDeleteBtn" type="button">Verwijderen</button>
+    </div>
+  `;
+  document.getElementById('confirmModalOverlay').classList.add('open');
+  document.getElementById('confirmDeleteBtn').addEventListener('click', async () => {
+    const nameForToast = wine.name;
+    try {
+      await fetch(API_URL + '?id=' + encodeURIComponent(pendingDeleteId), { method: 'DELETE' });
+      document.getElementById('confirmModalOverlay').classList.remove('open');
+      await loadWines();
+      render();
+      showToast(`'${nameForToast}' verwijderd.`);
+    } catch (err) {
+      document.getElementById('confirmModalOverlay').classList.remove('open');
+      showNotice('Fles kon niet worden verwijderd. Probeer opnieuw.');
+    }
+  });
+}
+document.getElementById('confirmModalOverlay').addEventListener('click', (e) => {
+  if (e.target.id === 'confirmModalOverlay' || e.target.closest('[data-action="closeConfirmModal"]')) {
+    document.getElementById('confirmModalOverlay').classList.remove('open');
+  }
+});
+
+let toastTimer = null;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 3200);
+}
+function showNotice(msg) {
+  document.getElementById('noticeBox').innerHTML = `<div class="notice">${escapeHtml(msg)}</div>`;
+}
+
+function renderDetail(w) {
+  const characterHtml = (w.character || '')
+    .split(/\n\s*\n/).map(p => p.trim()).filter(Boolean).map(p => `<p>${escapeHtml(p)}</p>`).join('');
+  const servingLines = Array.isArray(w.serving) ? w.serving : (w.serving ? String(w.serving).split('\n') : []);
+  const servingHtml = servingLines.map(l => l.trim()).filter(Boolean).map(l => `<li>${escapeHtml(l)}</li>`).join('');
+  if (!characterHtml && !servingHtml) return '';
+  return `
+    <button class="btn" data-action="toggleDetail" data-id="${w.id}" style="margin-top:11px;" type="button">Details</button>
+    <div class="detail-panel" id="detail-${w.id}">
+      ${characterHtml ? `<div class="detail-section"><h4>Karakter</h4>${characterHtml}</div>` : ''}
+      ${servingHtml ? `<div class="detail-section"><h4>Openen &amp; serveren</h4><ul class="detail-list">${servingHtml}</ul></div>` : ''}
+    </div>
+  `;
 }
 
 function render() {
+  renderTiles();
   const list = document.getElementById('list');
   const emptyMsg = document.getElementById('emptyMsg');
   list.innerHTML = '';
@@ -600,7 +871,7 @@ function render() {
     if (w.drunk) return false;
     if (currentFilter !== 'all' && w.status !== currentFilter) return false;
     if (searchTerm) {
-      const hay = (w.name + ' ' + (w.grape||'') + ' ' + (w.region||'')).toLowerCase();
+      const hay = (w.name + ' ' + (w.grape||'') + ' ' + (w.producer||'') + ' ' + (w.region||'') + ' ' + (w.year||'')).toLowerCase();
       if (!hay.includes(searchTerm)) return false;
     }
     return true;
@@ -610,14 +881,14 @@ function render() {
     if (currentSort === 'yearAsc') return (a.year||0) - (b.year||0);
     if (currentSort === 'yearDesc') return (b.year||0) - (a.year||0);
     if (currentSort === 'name') return (a.name||'').localeCompare(b.name||'');
+    if (currentSort === 'producer') return (a.producer||'').localeCompare(b.producer||'');
+    if (currentSort === 'qty') return (b.qty||0) - (a.qty||0);
     const so = statusOrder[a.status] - statusOrder[b.status];
     if (so !== 0) return so;
     return (a.year||0) - (b.year||0);
   });
 
   document.getElementById('resultCount').textContent = filtered.length + ' resultaat' + (filtered.length===1?'':'en');
-  const activeCount = wines.filter(w => !w.drunk).length;
-  document.getElementById('headerCount').textContent = activeCount + ' flessen op voorraad · ' + wines.filter(w=>w.drunk).length + ' opgedronken';
 
   if (filtered.length === 0) {
     emptyMsg.style.display = 'block';
@@ -630,48 +901,37 @@ function render() {
     card.className = 'card' + (w.drunk ? ' drunk-item' : '');
     const badgeClass = w.drunk ? 'drunk' : w.status;
     const badgeText = w.drunk ? 'Opgedronken' : statusLabel[w.status];
+    const qty = w.qty || 1;
     card.innerHTML = `
       <div class="card-top">
         <div>
-          ${w.producer ? `<button class="producer-link" data-action="showProducer" data-producer="${escapeHtml(w.producer)}">${escapeHtml(w.producer)}</button>` : ''}
+          ${w.producer ? `<button class="producer-link" data-action="showProducer" data-producer="${escapeHtml(w.producer)}" type="button">${escapeHtml(w.producer.toUpperCase())}</button>` : ''}
           <div class="card-title">${escapeHtml(w.name)}${w.year ? ' ' + w.year : ''}</div>
           <div class="card-sub">${escapeHtml(w.grape || '')}${w.grape && w.region ? ' · ' : ''}${escapeHtml(w.region || '')}</div>
         </div>
         <span class="badge ${badgeClass}">${badgeText}</span>
       </div>
-      ${w.window ? `<div class="window">${escapeHtml(w.window)}</div>` : ''}
-      <div class="qty-row">
-        <span class="qty-label">Aantal:</span>
-        <button class="qty-btn" data-action="qty-down" data-id="${w.id}" ${writable?'':'disabled'}>−</button>
-        <span class="qty-value">${w.qty || 1}</span>
-        <button class="qty-btn" data-action="qty-up" data-id="${w.id}" ${writable?'':'disabled'}>+</button>
+      <div class="card-meta">
+        ${w.window ? `<div class="meta-row"><span class="meta-label">Drinkvenster</span><span>${escapeHtml(w.window)}</span></div>` : ''}
+        <div class="meta-row">
+          <span class="meta-label">Voorraad</span>
+          <span class="qty-stepper">
+            <button class="qty-btn" data-action="qty-down" data-id="${w.id}" aria-label="Aantal verminderen" ${(writable && qty > 1 && !w.drunk)?'':'disabled'} type="button">−</button>
+            <span class="qty-value">${qty}</span>
+            <button class="qty-btn" data-action="qty-up" data-id="${w.id}" aria-label="Aantal verhogen" ${(writable && !w.drunk)?'':'disabled'} type="button">+</button>
+            <span>fles${qty===1?'':'sen'}</span>
+          </span>
+        </div>
+        ${w.location ? `<div class="meta-row"><span class="meta-label">Locatie</span><span>${escapeHtml(w.location)}</span></div>` : ''}
       </div>
       <div class="actions">
-        ${!w.drunk ? `<button class="btn" data-action="drunk" data-id="${w.id}" ${writable?'':'disabled'}>Opgedronken</button>` : `<button class="btn" data-action="undrunk" data-id="${w.id}" ${writable?'':'disabled'}>Terugzetten</button>`}
-        <button class="btn danger" data-action="delete" data-id="${w.id}" ${writable?'':'disabled'}>Verwijderen</button>
+        ${!w.drunk ? `<button class="btn primary" data-action="drunk" data-id="${w.id}" ${writable?'':'disabled'} type="button">Opgedronken</button>` : `<button class="btn" data-action="undrunk" data-id="${w.id}" ${writable?'':'disabled'} type="button">Terugzetten</button>`}
+        <button class="btn ghost-danger" data-action="delete" data-id="${w.id}" ${writable?'':'disabled'} type="button">Verwijderen</button>
       </div>
-      ${(w.character || (w.serving && w.serving.length)) ? renderDetail(w) : ''}
+      ${renderDetail(w)}
     `;
     list.appendChild(card);
   });
-}
-
-function renderDetail(w) {
-  const characterHtml = (w.character || '')
-    .split(/\n\s*\n/)
-    .map(p => p.trim())
-    .filter(Boolean)
-    .map(p => `<p>${escapeHtml(p)}</p>`)
-    .join('');
-  const servingLines = Array.isArray(w.serving) ? w.serving : (w.serving ? String(w.serving).split('\n') : []);
-  const servingHtml = servingLines.map(l => l.trim()).filter(Boolean).map(l => `<li>${escapeHtml(l)}</li>`).join('');
-  return `
-    <button class="detail-toggle" data-action="toggleDetail" data-id="${w.id}">Meer info</button>
-    <div class="detail-panel" id="detail-${w.id}">
-      ${characterHtml ? `<div class="detail-section"><h4>Karakter</h4>${characterHtml}</div>` : ''}
-      ${servingHtml ? `<div class="detail-section"><h4>Openen &amp; serveren</h4><ul class="detail-list">${servingHtml}</ul></div>` : ''}
-    </div>
-  `;
 }
 
 document.getElementById('list').addEventListener('click', async (e) => {
@@ -679,25 +939,26 @@ document.getElementById('list').addEventListener('click', async (e) => {
   if (!btn || btn.disabled) return;
   const id = btn.dataset.id;
   const action = btn.dataset.action;
-  if (action === 'showProducer') {
-    showProducerModal(btn.dataset.producer);
-    return;
-  }
+  if (action === 'showProducer') { showProducerModal(btn.dataset.producer); return; }
   if (action === 'toggleDetail') {
     const panel = document.getElementById('detail-' + id);
     if (panel) panel.classList.toggle('open');
     return;
   }
+  if (action === 'delete') { openDeleteConfirm(id); return; }
   const wine = wines.find(w => String(w.id) === String(id));
   try {
     if (action === 'drunk') {
       await fetch(API_URL + '?id=' + encodeURIComponent(id), { method: 'PATCH', body: JSON.stringify({ drunk: true }) });
+      await loadWines(); render();
+      showToast(`'${wine ? wine.name : 'Fles'}' gemarkeerd als opgedronken.`);
+      return;
     }
     if (action === 'undrunk') {
       await fetch(API_URL + '?id=' + encodeURIComponent(id), { method: 'PATCH', body: JSON.stringify({ drunk: false }) });
-    }
-    if (action === 'delete') {
-      await fetch(API_URL + '?id=' + encodeURIComponent(id), { method: 'DELETE' });
+      await loadWines(); render();
+      showToast(`'${wine ? wine.name : 'Fles'}' teruggezet naar voorraad.`);
+      return;
     }
     if (action === 'qty-up') {
       await fetch(API_URL + '?id=' + encodeURIComponent(id), { method: 'PATCH', body: JSON.stringify({ qty: (wine?.qty || 1) + 1 }) });
@@ -712,35 +973,19 @@ document.getElementById('list').addEventListener('click', async (e) => {
   }
 });
 
-document.querySelectorAll('.chip[data-filter]').forEach(chip => {
-  chip.addEventListener('click', () => {
-    document.querySelectorAll('.chip[data-filter]').forEach(c => c.classList.remove('active'));
-    chip.classList.add('active');
-    currentFilter = chip.dataset.filter;
-    render();
+document.getElementById('importToggle').addEventListener('click', () => {
+  const body = document.getElementById('importBody');
+  const btn = document.getElementById('importToggle');
+  const open = body.classList.toggle('open');
+  btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+});
+document.querySelectorAll('.import-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.import-tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    document.querySelectorAll('.import-panel').forEach(p => p.classList.remove('open'));
+    document.getElementById('panel-' + tab.dataset.tab).classList.add('open');
   });
-});
-
-document.getElementById('sortSelect').addEventListener('change', (e) => {
-  currentSort = e.target.value;
-  render();
-});
-
-document.getElementById('search').addEventListener('input', (e) => {
-  searchTerm = e.target.value.toLowerCase();
-  render();
-});
-
-document.getElementById('pairingBtn').addEventListener('click', () => {
-  renderPairingResults(document.getElementById('pairingInput').value);
-});
-document.getElementById('pairingInput').addEventListener('keydown', (e) => {
-  if (e.key === 'Enter') renderPairingResults(document.getElementById('pairingInput').value);
-});
-
-document.getElementById('addToggle').addEventListener('click', () => {
-  document.getElementById('addForm').classList.toggle('open');
-  document.getElementById('bulkForm').classList.remove('open');
 });
 
 document.getElementById('saveBtn').addEventListener('click', async () => {
@@ -765,17 +1010,12 @@ document.getElementById('saveBtn').addEventListener('click', async () => {
     if (!res.ok) throw new Error('save failed');
     ['f_name','f_producer','f_grape','f_region','f_year','f_window','f_character','f_serving'].forEach(id => document.getElementById(id).value = '');
     document.getElementById('f_qty').value = 1;
-    document.getElementById('addForm').classList.remove('open');
     await loadWines();
     render();
+    showToast(`'${newWine.name}' toegevoegd aan de kelder.`);
   } catch (err) {
     showNotice('Fles kon niet worden toegevoegd. Probeer opnieuw.');
   }
-});
-
-document.getElementById('bulkToggle').addEventListener('click', () => {
-  document.getElementById('bulkForm').classList.toggle('open');
-  document.getElementById('addForm').classList.remove('open');
 });
 
 document.getElementById('bulkSaveBtn').addEventListener('click', async () => {
@@ -816,25 +1056,17 @@ document.getElementById('bulkSaveBtn').addEventListener('click', async () => {
     }
   }
   document.getElementById('bulkInput').value = '';
-  document.getElementById('bulkForm').classList.remove('open');
   await loadWines();
   render();
-  showNotice(count + ' fles(sen) toegevoegd aan de kelder.' + (failed ? ' ' + failed + ' mislukt.' : ''));
+  showToast(count + ' fles(sen) toegevoegd aan de kelder.' + (failed ? ' ' + failed + ' mislukt.' : ''));
 });
 
-function showNotice(msg) {
-  document.getElementById('noticeBox').innerHTML = `<div class="notice">${escapeHtml(msg)}</div>`;
-}
-
 async function init() {
-  document.getElementById('syncBadge').textContent = '🔄 Verbinden…';
   try {
     await Promise.all([loadWines(), loadProducers()]);
     render();
-    document.getElementById('syncBadge').textContent = '🔄 Live';
   } catch (err) {
     document.getElementById('headerCount').textContent = 'Kan wijnvoorraad niet laden';
-    document.getElementById('syncBadge').textContent = '';
     showNotice('Kan niet verbinden met de database. Controleer of api/config.php goed staat ingesteld.');
   }
 }

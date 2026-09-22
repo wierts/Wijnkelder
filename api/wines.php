@@ -21,6 +21,9 @@ switch ($method) {
                 'drunk' => (bool) $r['drunk'],
                 'qty' => isset($r['qty']) ? (int) $r['qty'] : 1,
                 'producer' => $r['producer'] ?? '',
+                // Optional kelderlocatie (bv. "B-04"). Alleen aanwezig als de tabel een
+                // 'location' kolom heeft; anders blijft dit gewoon null en verandert er niets.
+                'location' => $r['location'] ?? null,
             ];
         }, $rows);
         echo json_encode($wines);
