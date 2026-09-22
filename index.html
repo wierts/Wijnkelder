@@ -331,8 +331,14 @@ let wines = [];
 let currentFilter = 'all';
 let currentSort = 'statusYear';
 let searchTerm = '';
-let dbRef = null;
-let writable = true;
+const writable = true;
+const API_URL = 'api/wines.php';
+
+async function loadWines() {
+  const res = await fetch(API_URL);
+  if (!res.ok) throw new Error('load failed');
+  wines = await res.json();
+}
 
 function escapeHtml(str) {
   const d = document.createElement('div');
@@ -419,7 +425,7 @@ function renderDetail(w) {
 
 document.getElementById('list').addEventListener('click', async (e) => {
   const btn = e.target.closest('button[data-action]');
-  if (!btn || btn.disabled || !dbRef) return;
+  if (!btn || btn.disabled) return;
   const id = btn.dataset.id;
   const action = btn.dataset.action;
   if (action === 'toggleDetail') {
@@ -428,9 +434,17 @@ document.getElementById('list').addEventListener('click', async (e) => {
     return;
   }
   try {
-    if (action === 'drunk') await dbRef.collection('wines').doc(id).update({ drunk: true });
-    if (action === 'undrunk') await dbRef.collection('wines').doc(id).update({ drunk: false });
-    if (action === 'delete') await dbRef.collection('wines').doc(id).delete();
+    if (action === 'drunk') {
+      await fetch(API_URL + '?id=' + encodeURIComponent(id), { method: 'PATCH', body: JSON.stringify({ drunk: true }) });
+    }
+    if (action === 'undrunk') {
+      await fetch(API_URL + '?id=' + encodeURIComponent(id), { method: 'PATCH', body: JSON.stringify({ drunk: false }) });
+    }
+    if (action === 'delete') {
+      await fetch(API_URL + '?id=' + encodeURIComponent(id), { method: 'DELETE' });
+    }
+    await loadWines();
+    render();
   } catch (err) {
     showNotice('Wijziging kon niet worden opgeslagen. Probeer opnieuw.');
   }
@@ -460,7 +474,6 @@ document.getElementById('addToggle').addEventListener('click', () => {
 });
 
 document.getElementById('saveBtn').addEventListener('click', async () => {
-  if (!dbRef) return;
   const name = document.getElementById('f_name').value.trim();
   if (!name) { document.getElementById('f_name').focus(); return; }
   const servingLines = document.getElementById('f_serving').value.split('\n').map(l => l.trim()).filter(Boolean);
@@ -476,9 +489,12 @@ document.getElementById('saveBtn').addEventListener('click', async () => {
     drunk: false
   };
   try {
-    await dbRef.collection('wines').add(newWine);
+    const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify(newWine) });
+    if (!res.ok) throw new Error('save failed');
     ['f_name','f_grape','f_region','f_year','f_window','f_character','f_serving'].forEach(id => document.getElementById(id).value = '');
     document.getElementById('addForm').classList.remove('open');
+    await loadWines();
+    render();
   } catch (err) {
     showNotice('Fles kon niet worden toegevoegd. Probeer opnieuw.');
   }
@@ -489,37 +505,16 @@ function showNotice(msg) {
 }
 
 async function init() {
-  let db = null;
+  document.getElementById('syncBadge').textContent = '🔄 Verbinden…';
   try {
-    db = await claude.use('db');
-  } catch (e) {
-    db = null;
-  }
-
-  if (!db) {
-    document.getElementById('headerCount').textContent = 'Delen niet beschikbaar in deze weergave';
-    showNotice('Kan niet verbinden met de gedeelde lijst. Open deze app via de gedeelde link om de gezamenlijke wijnvoorraad te zien en te bewerken.');
-    return;
-  }
-
-  dbRef = db;
-
-  try {
-    const user = await claude.use('user');
-    if (user) {
-      const canWrite = await user.can('data.write');
-      if (canWrite === false) writable = false;
-    }
-  } catch (e) {}
-
-  document.getElementById('syncBadge').textContent = '🔄 Live gedeeld';
-
-  db.collection('wines').onSnapshot((snap) => {
-    wines = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    await loadWines();
     render();
-  }, (err) => {
-    showNotice('Verbinding met de gedeelde lijst verbroken. Herlaad de pagina.');
-  });
+    document.getElementById('syncBadge').textContent = '🔄 Live';
+  } catch (err) {
+    document.getElementById('headerCount').textContent = 'Kan wijnvoorraad niet laden';
+    document.getElementById('syncBadge').textContent = '';
+    showNotice('Kan niet verbinden met de database. Controleer of api/config.php goed staat ingesteld.');
+  }
 }
 
 init();
