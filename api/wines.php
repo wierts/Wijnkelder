@@ -20,6 +20,7 @@ switch ($method) {
                 'serving' => json_decode($r['serving_json'] ?: '[]'),
                 'drunk' => (bool) $r['drunk'],
                 'qty' => isset($r['qty']) ? (int) $r['qty'] : 1,
+                'producer' => $r['producer'] ?? '',
             ];
         }, $rows);
         echo json_encode($wines);
@@ -32,7 +33,7 @@ switch ($method) {
             echo json_encode(['error' => 'name is verplicht']);
             exit;
         }
-        $stmt = $pdo->prepare('INSERT INTO wines (name, grape, region, year, status, window_note, character_note, serving_json, drunk, qty) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, ?)');
+        $stmt = $pdo->prepare('INSERT INTO wines (name, grape, region, year, status, window_note, character_note, serving_json, drunk, qty, producer) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?)');
         $stmt->execute([
             $data['name'],
             $data['grape'] ?? '',
@@ -43,6 +44,7 @@ switch ($method) {
             $data['character'] ?? '',
             json_encode($data['serving'] ?? []),
             $data['qty'] ?? 1,
+            $data['producer'] ?? '',
         ]);
         echo json_encode(['id' => (string) $pdo->lastInsertId()]);
         break;
@@ -56,13 +58,41 @@ switch ($method) {
             exit;
         }
         $data = json_decode(file_get_contents('php://input'), true) ?: [];
+
+        $fieldMap = [
+            'name' => 'name',
+            'producer' => 'producer',
+            'grape' => 'grape',
+            'region' => 'region',
+            'year' => 'year',
+            'status' => 'status',
+            'window' => 'window_note',
+            'character' => 'character_note',
+        ];
+        $sets = [];
+        $vals = [];
+        foreach ($fieldMap as $key => $col) {
+            if (array_key_exists($key, $data)) {
+                $sets[] = "$col = ?";
+                $vals[] = $data[$key];
+            }
+        }
+        if (array_key_exists('serving', $data)) {
+            $sets[] = 'serving_json = ?';
+            $vals[] = json_encode($data['serving']);
+        }
         if (array_key_exists('drunk', $data)) {
-            $stmt = $pdo->prepare('UPDATE wines SET drunk = ? WHERE id = ?');
-            $stmt->execute([$data['drunk'] ? 1 : 0, $id]);
+            $sets[] = 'drunk = ?';
+            $vals[] = $data['drunk'] ? 1 : 0;
         }
         if (array_key_exists('qty', $data)) {
-            $stmt = $pdo->prepare('UPDATE wines SET qty = ? WHERE id = ?');
-            $stmt->execute([max(1, (int) $data['qty']), $id]);
+            $sets[] = 'qty = ?';
+            $vals[] = max(1, (int) $data['qty']);
+        }
+        if (!empty($sets)) {
+            $vals[] = $id;
+            $stmt = $pdo->prepare('UPDATE wines SET ' . implode(', ', $sets) . ' WHERE id = ?');
+            $stmt->execute($vals);
         }
         echo json_encode(['ok' => true]);
         break;

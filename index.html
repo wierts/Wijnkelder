@@ -253,6 +253,32 @@
     margin-top: 12px; width: 100%; padding: 10px; border-radius: 8px; border: none;
     background: var(--wait); color: #fff; font-weight: 600; cursor: pointer;
   }
+  .producer-link {
+    background: none; border: none; padding: 0; margin: 0 0 2px;
+    font-size: 0.76rem; font-weight: 700; color: var(--accent);
+    text-transform: uppercase; letter-spacing: 0.02em; cursor: pointer; text-align: left;
+  }
+  .producer-link:hover { text-decoration: underline; }
+  .modal-overlay {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45);
+    z-index: 50; align-items: flex-end; justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal-box {
+    background: var(--card-bg); width: 100%; max-width: 720px;
+    border-radius: 16px 16px 0 0; padding: 18px 18px calc(18px + env(safe-area-inset-bottom, 0px));
+    max-height: 82vh; overflow-y: auto;
+  }
+  .modal-close {
+    float: right; border: none; background: transparent; color: var(--text-dim);
+    font-size: 1.1rem; cursor: pointer; padding: 4px 6px; line-height: 1;
+  }
+  .modal-box h3 { margin: 0 0 2px; font-size: 1.05rem; }
+  .modal-region { font-size: 0.8rem; color: var(--text-dim); margin-bottom: 10px; }
+  .modal-desc { font-size: 0.88rem; line-height: 1.5; margin: 0 0 14px; white-space: pre-line; }
+  .modal-wines-title { font-size: 0.76rem; text-transform: uppercase; letter-spacing: 0.03em; color: var(--text-dim); margin-bottom: 6px; }
+  .modal-wine-item { font-size: 0.85rem; padding: 6px 0; border-top: 1px solid var(--border); }
+  .modal-wine-item:first-child { border-top: none; }
   .empty { text-align: center; color: var(--text-dim); padding: 30px 0; font-size: 0.88rem; }
   .notice {
     background: var(--soon-bg);
@@ -356,8 +382,10 @@
 
   <button class="add-toggle" id="addToggle">+ Fles toevoegen</button>
   <div class="add-form" id="addForm">
-    <label>Naam / producent *</label>
-    <input id="f_name" placeholder="bv. Château Voorbeeld">
+    <label>Producent</label>
+    <input id="f_producer" placeholder="bv. Château Voorbeeld">
+    <label>Naam / cuvée *</label>
+    <input id="f_name" placeholder="bv. Grand Vin">
     <label>Druif / stijl</label>
     <input id="f_grape" placeholder="bv. Chardonnay">
     <label>Regio / land</label>
@@ -393,22 +421,66 @@
   <div class="empty" id="emptyMsg" style="display:none;">Geen flessen gevonden.</div>
 </div>
 
+<div class="modal-overlay" id="producerModalOverlay">
+  <div class="modal-box" id="producerModalBox"></div>
+</div>
+
 <script>
 const statusLabel = { now: 'Nu drinken', soon: 'Binnenkort', wait: 'Kan wachten' };
 const statusOrder = { now: 0, soon: 1, wait: 2 };
 
 let wines = [];
+let producers = [];
 let currentFilter = 'all';
 let currentSort = 'statusYear';
 let searchTerm = '';
 const writable = true;
 const API_URL = 'api/wines.php';
+const PRODUCERS_URL = 'api/producers.php';
 
 async function loadWines() {
   const res = await fetch(API_URL);
   if (!res.ok) throw new Error('load failed');
   wines = await res.json();
 }
+
+async function loadProducers() {
+  try {
+    const res = await fetch(PRODUCERS_URL);
+    if (res.ok) producers = await res.json();
+  } catch (err) {
+    producers = [];
+  }
+}
+
+function findProducer(name) {
+  return producers.find(p => p.name === name);
+}
+
+function showProducerModal(name) {
+  const box = document.getElementById('producerModalBox');
+  const overlay = document.getElementById('producerModalOverlay');
+  const info = findProducer(name);
+  const otherWines = wines.filter(w => w.producer === name && !w.drunk);
+  const winesHtml = otherWines.length ? `
+    <div class="modal-wines-title">Flessen van deze producent (${otherWines.length})</div>
+    ${otherWines.map(w => `<div class="modal-wine-item">${escapeHtml(w.name)}${w.year ? ' ' + w.year : ''}</div>`).join('')}
+  ` : '';
+  box.innerHTML = `
+    <button class="modal-close" data-action="closeProducerModal">✕</button>
+    <h3>${escapeHtml(name)}</h3>
+    ${info && info.region ? `<div class="modal-region">${escapeHtml(info.region)}</div>` : ''}
+    <div class="modal-desc">${escapeHtml((info && info.description) || 'Nog geen informatie over deze producent.')}</div>
+    ${winesHtml}
+  `;
+  overlay.classList.add('open');
+}
+
+document.getElementById('producerModalOverlay').addEventListener('click', (e) => {
+  if (e.target.id === 'producerModalOverlay' || e.target.closest('[data-action="closeProducerModal"]')) {
+    document.getElementById('producerModalOverlay').classList.remove('open');
+  }
+});
 
 function escapeHtml(str) {
   const d = document.createElement('div');
@@ -544,6 +616,7 @@ function render() {
     card.innerHTML = `
       <div class="card-top">
         <div>
+          ${w.producer ? `<button class="producer-link" data-action="showProducer" data-producer="${escapeHtml(w.producer)}">${escapeHtml(w.producer)}</button>` : ''}
           <div class="card-title">${escapeHtml(w.name)}${w.year ? ' ' + w.year : ''}</div>
           <div class="card-sub">${escapeHtml(w.grape || '')}${w.grape && w.region ? ' · ' : ''}${escapeHtml(w.region || '')}</div>
         </div>
@@ -589,6 +662,10 @@ document.getElementById('list').addEventListener('click', async (e) => {
   if (!btn || btn.disabled) return;
   const id = btn.dataset.id;
   const action = btn.dataset.action;
+  if (action === 'showProducer') {
+    showProducerModal(btn.dataset.producer);
+    return;
+  }
   if (action === 'toggleDetail') {
     const panel = document.getElementById('detail-' + id);
     if (panel) panel.classList.toggle('open');
@@ -655,6 +732,7 @@ document.getElementById('saveBtn').addEventListener('click', async () => {
   const servingLines = document.getElementById('f_serving').value.split('\n').map(l => l.trim()).filter(Boolean);
   const newWine = {
     name: name,
+    producer: document.getElementById('f_producer').value.trim(),
     grape: document.getElementById('f_grape').value.trim(),
     region: document.getElementById('f_region').value.trim(),
     year: parseInt(document.getElementById('f_year').value) || null,
@@ -668,7 +746,7 @@ document.getElementById('saveBtn').addEventListener('click', async () => {
   try {
     const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify(newWine) });
     if (!res.ok) throw new Error('save failed');
-    ['f_name','f_grape','f_region','f_year','f_window','f_character','f_serving'].forEach(id => document.getElementById(id).value = '');
+    ['f_name','f_producer','f_grape','f_region','f_year','f_window','f_character','f_serving'].forEach(id => document.getElementById(id).value = '');
     document.getElementById('f_qty').value = 1;
     document.getElementById('addForm').classList.remove('open');
     await loadWines();
@@ -703,6 +781,7 @@ document.getElementById('bulkSaveBtn').addEventListener('click', async () => {
         method: 'POST',
         body: JSON.stringify({
           name: w.name,
+          producer: w.producer || '',
           grape: w.grape || '',
           region: w.region || '',
           year: w.year || null,
@@ -733,7 +812,7 @@ function showNotice(msg) {
 async function init() {
   document.getElementById('syncBadge').textContent = '🔄 Verbinden…';
   try {
-    await loadWines();
+    await Promise.all([loadWines(), loadProducers()]);
     render();
     document.getElementById('syncBadge').textContent = '🔄 Live';
   } catch (err) {

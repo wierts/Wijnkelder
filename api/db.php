@@ -42,3 +42,17 @@ try {
 } catch (PDOException $e) {
     // kolom bestaat al, niets doen
 }
+
+try {
+    $pdo->exec("ALTER TABLE wines ADD COLUMN producer VARCHAR(255) DEFAULT ''");
+} catch (PDOException $e) {
+    // kolom bestaat al, niets doen
+}
+
+$pdo->exec("CREATE TABLE IF NOT EXISTS producers (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL UNIQUE,
+    region VARCHAR(255) DEFAULT '',
+    description TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
