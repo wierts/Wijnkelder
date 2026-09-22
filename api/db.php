@@ -33,5 +33,12 @@ $pdo->exec("CREATE TABLE IF NOT EXISTS wines (
     character_note TEXT,
     serving_json TEXT,
     drunk TINYINT(1) DEFAULT 0,
+    qty INT DEFAULT 1,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+try {
+    $pdo->exec("ALTER TABLE wines ADD COLUMN qty INT DEFAULT 1");
+} catch (PDOException $e) {
+    // kolom bestaat al, niets doen
+}

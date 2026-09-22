@@ -203,6 +203,56 @@
     font-weight: 600;
     cursor: pointer;
   }
+  .qty-row { display: flex; align-items: center; gap: 8px; margin-top: 9px; }
+  .qty-label { font-size: 0.78rem; color: var(--text-dim); }
+  .qty-btn {
+    width: 26px; height: 26px; border-radius: 8px; border: 1px solid var(--border);
+    background: var(--bg); color: var(--text); font-size: 0.9rem; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .qty-btn:hover { background: var(--accent-light); color: var(--accent); }
+  .qty-btn:disabled { opacity: 0.4; cursor: default; }
+  .qty-value { font-size: 0.85rem; font-weight: 700; min-width: 18px; text-align: center; }
+  .pairing-box {
+    background: var(--card-bg); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 16px; margin: 14px 0 18px;
+  }
+  .pairing-box label { font-weight: 700; font-size: 0.95rem; display: block; margin-bottom: 8px; }
+  .pairing-row { display: flex; gap: 8px; }
+  .pairing-row input {
+    flex: 1; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border);
+    background: var(--bg); color: var(--text); font-size: 0.92rem;
+  }
+  .pairing-row button {
+    padding: 10px 16px; border-radius: 10px; border: none; background: var(--accent);
+    color: #fff; font-weight: 600; font-size: 0.88rem; cursor: pointer; white-space: nowrap;
+  }
+  .pairing-hint { font-size: 0.74rem; color: var(--text-dim); margin-top: 8px; }
+  .pairing-results { margin-top: 14px; display: flex; flex-direction: column; gap: 10px; }
+  .pairing-card { border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; background: var(--bg); }
+  .pairing-card .card-top { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; }
+  .pairing-card .card-title { font-weight: 700; font-size: 0.95rem; }
+  .pairing-card .card-sub { font-size: 0.8rem; color: var(--text-dim); margin-top: 2px; }
+  .pairing-why { font-size: 0.78rem; color: var(--accent); margin-top: 6px; }
+  .pairing-empty { font-size: 0.85rem; color: var(--text-dim); margin-top: 10px; }
+  .bulk-toggle {
+    width: 100%; padding: 11px; border-radius: 10px; background: var(--wait); color: #fff;
+    border: none; font-size: 0.9rem; font-weight: 600; cursor: pointer; margin: 0 0 14px;
+  }
+  .bulk-form {
+    display: none; background: var(--card-bg); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 14px; margin-bottom: 14px;
+  }
+  .bulk-form.open { display: block; }
+  .bulk-form textarea {
+    width: 100%; min-height: 140px; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--border);
+    background: var(--bg); color: var(--text); font-size: 0.78rem; font-family: ui-monospace, monospace; resize: vertical;
+  }
+  .bulk-hint { font-size: 0.74rem; color: var(--text-dim); margin-top: 8px; line-height: 1.4; }
+  .bulk-form .save-btn {
+    margin-top: 12px; width: 100%; padding: 10px; border-radius: 8px; border: none;
+    background: var(--wait); color: #fff; font-weight: 600; cursor: pointer;
+  }
   .empty { text-align: center; color: var(--text-dim); padding: 30px 0; font-size: 0.88rem; }
   .notice {
     background: var(--soon-bg);
@@ -276,6 +326,16 @@
 <div class="container">
   <div id="noticeBox"></div>
 
+  <div class="pairing-box">
+    <label>🍽️ Wat eten we vanavond?</label>
+    <div class="pairing-row">
+      <input id="pairingInput" placeholder="bv. steak, zalm, pasta, sushi, kaasplankje...">
+      <button id="pairingBtn">Zoek</button>
+    </div>
+    <div class="pairing-hint">Typ een gerecht of ingrediënt — ik zoek de beste match uit je kelder, met voorrang voor flessen die toch al 'Nu drinken' zijn.</div>
+    <div class="pairing-results" id="pairingResults"></div>
+  </div>
+
   <div class="controls">
     <input class="search" id="search" placeholder="Zoek op naam, druif, regio...">
     <div class="row">
@@ -316,7 +376,17 @@
     <textarea id="f_character" rows="4" placeholder="Beschrijving van smaak, stijl, druivenmix..."></textarea>
     <label>Openen &amp; serveren (één tip per regel)</label>
     <textarea id="f_serving" rows="4" placeholder="Serveer op 16-18°C&#10;Karaffeer 30 minuten..."></textarea>
+    <label>Aantal flessen</label>
+    <input id="f_qty" type="number" min="1" value="1">
     <button class="save-btn" id="saveBtn">Opslaan</button>
+  </div>
+
+  <button class="bulk-toggle" id="bulkToggle">📋 Meerdere flessen plakken (vanuit Claude-chat)</button>
+  <div class="bulk-form" id="bulkForm">
+    <label>Plak hier de JSON die Claude je gaf na het herkennen van je foto's</label>
+    <textarea id="bulkInput" placeholder='[&#10;  {"name":"...", "grape":"...", "region":"...", "year":2020, "status":"now", "window":"Nu drinken", "qty":1}&#10;]'></textarea>
+    <div class="bulk-hint">Stuur je flessenfoto's gewoon in de Claude-chat zoals eerder — Claude herkent de wijn, bepaalt het drinkvenster, en geeft je een blokje JSON terug dat je hier plakt.</div>
+    <button class="save-btn" id="bulkSaveBtn">Toevoegen aan kelder</button>
   </div>
 
   <div id="list"></div>
@@ -344,6 +414,91 @@ function escapeHtml(str) {
   const d = document.createElement('div');
   d.textContent = str || '';
   return d.innerHTML;
+}
+
+const keywordMap = {
+  "steak":["roodvlees","bbq"], "biefstuk":["roodvlees","bbq"], "rund":["roodvlees"], "ribeye":["roodvlees","bbq"],
+  "entrecote":["roodvlees","bbq"], "runderlap":["roodvlees"], "stoofvlees":["roodvlees"], "stoofpot":["roodvlees"],
+  "gehakt":["roodvlees","pasta"], "hamburger":["roodvlees","bbq"], "lamsvlees":["roodvlees","wild"], "lam":["roodvlees","wild"],
+  "wild":["wild"], "hert":["wild"], "ree":["wild"], "everzwijn":["wild"], "fazant":["wild","gevogelte"], "haas":["wild"],
+  "vis":["vis"], "zalm":["vis"], "tonijn":["vis"], "kabeljauw":["vis"], "heilbot":["vis"], "makreel":["vis"], "forel":["vis"], "zeebaars":["vis"],
+  "garnalen":["schaaldieren"], "mosselen":["schaaldieren"], "kreeft":["schaaldieren","romig"], "oesters":["schaaldieren"],
+  "schaaldieren":["schaaldieren"], "krab":["schaaldieren"], "scampi":["schaaldieren"],
+  "kip":["gevogelte"], "gevogelte":["gevogelte"], "kalkoen":["gevogelte"], "eend":["gevogelte"], "kipfilet":["gevogelte"],
+  "pasta":["pasta"], "spaghetti":["pasta"], "lasagne":["pasta"], "risotto":["pasta","romig"], "pizza":["pasta"], "macaroni":["pasta"],
+  "kaas":["kaas"], "geitenkaas":["kaas"], "brie":["kaas"], "parmezaan":["kaas"], "kaasplank":["kaas"],
+  "sushi":["aziatisch","vis"], "thai":["aziatisch"], "curry":["aziatisch","kruidig"], "aziatisch":["aziatisch"],
+  "wok":["aziatisch"], "indisch":["aziatisch","kruidig"],
+  "bbq":["bbq","roodvlees"], "barbecue":["bbq","roodvlees"], "gegrild":["bbq"],
+  "salade":["aperitief"], "borrel":["aperitief"], "aperitief":["aperitief"], "lunch":["aperitief"],
+  "romig":["romig"], "roomsaus":["romig"], "pittig":["kruidig"], "scherp":["kruidig"], "asperges":["vis","gevogelte"]
+};
+
+function inferTagsFromGrape(grape) {
+  const g = (grape || '').toLowerCase();
+  const tags = new Set();
+  if (/riesling|chenin|albari|vermentino|sauvignon|verdicchio|silvaner|carricante|aligot/.test(g)) { tags.add('vis'); tags.add('schaaldieren'); }
+  if (/chardonnay/.test(g)) { tags.add('vis'); tags.add('gevogelte'); tags.add('romig'); }
+  if (/viognier/.test(g)) { tags.add('gevogelte'); tags.add('aziatisch'); }
+  if (/scheurebe|gr[uü]ner|muscat|traube/.test(g)) { tags.add('aziatisch'); tags.add('aperitief'); }
+  if (/cabernet|merlot|syrah|shiraz|tempranillo|garnacha|garnatxa|nebbiolo|bordeaux/.test(g)) { tags.add('roodvlees'); tags.add('bbq'); }
+  if (/sangiovese|montepulciano|corvina|valpolicella/.test(g)) { tags.add('pasta'); tags.add('roodvlees'); }
+  if (tags.size === 0) { tags.add('aperitief'); }
+  return [...tags];
+}
+
+function findPairings(query) {
+  const q = query.toLowerCase();
+  const matchedTags = new Set();
+  for (const [key, tags] of Object.entries(keywordMap)) {
+    if (q.includes(key)) tags.forEach(t => matchedTags.add(t));
+  }
+  if (matchedTags.size === 0) return { tags: [], results: [] };
+
+  const scored = wines.filter(w => !w.drunk).map(w => {
+    const wTags = inferTagsFromGrape(w.grape);
+    const overlap = wTags.filter(t => matchedTags.has(t)).length;
+    return { wine: w, overlap, tags: wTags };
+  }).filter(x => x.overlap > 0);
+
+  scored.sort((a, b) => {
+    const sd = statusOrder[a.wine.status] - statusOrder[b.wine.status];
+    if (sd !== 0) return sd;
+    return b.overlap - a.overlap;
+  });
+
+  return { tags: [...matchedTags], results: scored.slice(0, 3) };
+}
+
+function renderPairingResults(query) {
+  const box = document.getElementById('pairingResults');
+  if (!query.trim()) { box.innerHTML = ''; return; }
+  const { tags, results } = findPairings(query);
+  if (tags.length === 0) {
+    box.innerHTML = '<div class="pairing-empty">Geen match gevonden voor dit gerecht — probeer een ander woord (bv. "vis", "steak", "pasta").</div>';
+    return;
+  }
+  if (results.length === 0) {
+    box.innerHTML = '<div class="pairing-empty">Geen fles in de kelder past goed hierbij.</div>';
+    return;
+  }
+  box.innerHTML = results.map(r => {
+    const w = r.wine;
+    const badgeClass = w.status;
+    const badgeText = statusLabel[w.status];
+    return `
+      <div class="pairing-card">
+        <div class="card-top">
+          <div>
+            <div class="card-title">${escapeHtml(w.name)}${w.year ? ' ' + w.year : ''}</div>
+            <div class="card-sub">${escapeHtml(w.grape || '')}${w.grape && w.region ? ' · ' : ''}${escapeHtml(w.region || '')}</div>
+          </div>
+          <span class="badge ${badgeClass}">${badgeText}</span>
+        </div>
+        <div class="pairing-why">Past bij: ${r.tags.filter(t => tags.includes(t)).join(', ')}</div>
+      </div>
+    `;
+  }).join('');
 }
 
 function render() {
@@ -395,6 +550,12 @@ function render() {
         <span class="badge ${badgeClass}">${badgeText}</span>
       </div>
       ${w.window ? `<div class="window">${escapeHtml(w.window)}</div>` : ''}
+      <div class="qty-row">
+        <span class="qty-label">Aantal:</span>
+        <button class="qty-btn" data-action="qty-down" data-id="${w.id}" ${writable?'':'disabled'}>−</button>
+        <span class="qty-value">${w.qty || 1}</span>
+        <button class="qty-btn" data-action="qty-up" data-id="${w.id}" ${writable?'':'disabled'}>+</button>
+      </div>
       <div class="actions">
         ${!w.drunk ? `<button class="btn" data-action="drunk" data-id="${w.id}" ${writable?'':'disabled'}>Opgedronken</button>` : `<button class="btn" data-action="undrunk" data-id="${w.id}" ${writable?'':'disabled'}>Terugzetten</button>`}
         <button class="btn danger" data-action="delete" data-id="${w.id}" ${writable?'':'disabled'}>Verwijderen</button>
@@ -433,6 +594,7 @@ document.getElementById('list').addEventListener('click', async (e) => {
     if (panel) panel.classList.toggle('open');
     return;
   }
+  const wine = wines.find(w => String(w.id) === String(id));
   try {
     if (action === 'drunk') {
       await fetch(API_URL + '?id=' + encodeURIComponent(id), { method: 'PATCH', body: JSON.stringify({ drunk: true }) });
@@ -442,6 +604,12 @@ document.getElementById('list').addEventListener('click', async (e) => {
     }
     if (action === 'delete') {
       await fetch(API_URL + '?id=' + encodeURIComponent(id), { method: 'DELETE' });
+    }
+    if (action === 'qty-up') {
+      await fetch(API_URL + '?id=' + encodeURIComponent(id), { method: 'PATCH', body: JSON.stringify({ qty: (wine?.qty || 1) + 1 }) });
+    }
+    if (action === 'qty-down') {
+      await fetch(API_URL + '?id=' + encodeURIComponent(id), { method: 'PATCH', body: JSON.stringify({ qty: Math.max(1, (wine?.qty || 1) - 1) }) });
     }
     await loadWines();
     render();
@@ -469,8 +637,16 @@ document.getElementById('search').addEventListener('input', (e) => {
   render();
 });
 
+document.getElementById('pairingBtn').addEventListener('click', () => {
+  renderPairingResults(document.getElementById('pairingInput').value);
+});
+document.getElementById('pairingInput').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') renderPairingResults(document.getElementById('pairingInput').value);
+});
+
 document.getElementById('addToggle').addEventListener('click', () => {
   document.getElementById('addForm').classList.toggle('open');
+  document.getElementById('bulkForm').classList.remove('open');
 });
 
 document.getElementById('saveBtn').addEventListener('click', async () => {
@@ -486,18 +662,68 @@ document.getElementById('saveBtn').addEventListener('click', async () => {
     window: document.getElementById('f_window').value.trim(),
     character: document.getElementById('f_character').value.trim(),
     serving: servingLines,
+    qty: parseInt(document.getElementById('f_qty').value) || 1,
     drunk: false
   };
   try {
     const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify(newWine) });
     if (!res.ok) throw new Error('save failed');
     ['f_name','f_grape','f_region','f_year','f_window','f_character','f_serving'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('f_qty').value = 1;
     document.getElementById('addForm').classList.remove('open');
     await loadWines();
     render();
   } catch (err) {
     showNotice('Fles kon niet worden toegevoegd. Probeer opnieuw.');
   }
+});
+
+document.getElementById('bulkToggle').addEventListener('click', () => {
+  document.getElementById('bulkForm').classList.toggle('open');
+  document.getElementById('addForm').classList.remove('open');
+});
+
+document.getElementById('bulkSaveBtn').addEventListener('click', async () => {
+  const raw = document.getElementById('bulkInput').value.trim();
+  if (!raw) return;
+  let parsed;
+  try {
+    parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) throw new Error('Verwacht een JSON-array van flessen');
+  } catch (err) {
+    showNotice('Kon de geplakte tekst niet lezen als JSON: ' + err.message);
+    return;
+  }
+  let count = 0;
+  let failed = 0;
+  for (const w of parsed) {
+    if (!w.name) continue;
+    try {
+      const res = await fetch(API_URL, {
+        method: 'POST',
+        body: JSON.stringify({
+          name: w.name,
+          grape: w.grape || '',
+          region: w.region || '',
+          year: w.year || null,
+          status: w.status || 'wait',
+          window: w.window || '',
+          character: w.character || '',
+          serving: w.serving || [],
+          qty: w.qty || 1
+        })
+      });
+      if (!res.ok) throw new Error('save failed');
+      count++;
+    } catch (err) {
+      failed++;
+    }
+  }
+  document.getElementById('bulkInput').value = '';
+  document.getElementById('bulkForm').classList.remove('open');
+  await loadWines();
+  render();
+  showNotice(count + ' fles(sen) toegevoegd aan de kelder.' + (failed ? ' ' + failed + ' mislukt.' : ''));
 });
 
 function showNotice(msg) {

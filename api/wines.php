@@ -19,6 +19,7 @@ switch ($method) {
                 'character' => $r['character_note'],
                 'serving' => json_decode($r['serving_json'] ?: '[]'),
                 'drunk' => (bool) $r['drunk'],
+                'qty' => isset($r['qty']) ? (int) $r['qty'] : 1,
             ];
         }, $rows);
         echo json_encode($wines);
@@ -31,7 +32,7 @@ switch ($method) {
             echo json_encode(['error' => 'name is verplicht']);
             exit;
         }
-        $stmt = $pdo->prepare('INSERT INTO wines (name, grape, region, year, status, window_note, character_note, serving_json, drunk) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0)');
+        $stmt = $pdo->prepare('INSERT INTO wines (name, grape, region, year, status, window_note, character_note, serving_json, drunk, qty) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, ?)');
         $stmt->execute([
             $data['name'],
             $data['grape'] ?? '',
@@ -41,6 +42,7 @@ switch ($method) {
             $data['window'] ?? '',
             $data['character'] ?? '',
             json_encode($data['serving'] ?? []),
+            $data['qty'] ?? 1,
         ]);
         echo json_encode(['id' => (string) $pdo->lastInsertId()]);
         break;
@@ -57,6 +59,10 @@ switch ($method) {
         if (array_key_exists('drunk', $data)) {
             $stmt = $pdo->prepare('UPDATE wines SET drunk = ? WHERE id = ?');
             $stmt->execute([$data['drunk'] ? 1 : 0, $id]);
+        }
+        if (array_key_exists('qty', $data)) {
+            $stmt = $pdo->prepare('UPDATE wines SET qty = ? WHERE id = ?');
+            $stmt->execute([max(1, (int) $data['qty']), $id]);
         }
         echo json_encode(['ok' => true]);
         break;
