@@ -212,6 +212,56 @@
     font-size: 0.8rem;
     margin-bottom: 10px;
   }
+  .add-form textarea {
+    width: 100%;
+    padding: 8px 10px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--text);
+    font-size: 0.88rem;
+    font-family: inherit;
+    resize: vertical;
+  }
+  .detail-toggle {
+    margin-top: 9px;
+    font-size: 0.76rem;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--accent);
+    border-radius: 8px;
+    padding: 5px 10px;
+    cursor: pointer;
+  }
+  .detail-panel {
+    display: none;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid var(--border);
+  }
+  .detail-panel.open { display: block; }
+  .detail-section { margin-bottom: 10px; }
+  .detail-section:last-child { margin-bottom: 0; }
+  .detail-section h4 {
+    margin: 0 0 4px;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: var(--text-dim);
+  }
+  .detail-section p {
+    margin: 0 0 6px;
+    font-size: 0.86rem;
+    line-height: 1.45;
+  }
+  .detail-section p:last-child { margin-bottom: 0; }
+  .detail-list {
+    margin: 0;
+    padding-left: 18px;
+    font-size: 0.86rem;
+    line-height: 1.5;
+  }
+  .detail-list li { margin-bottom: 2px; }
 </style>
 </head>
 <body>
@@ -262,6 +312,10 @@
     </select>
     <label>Drinkvenster / notitie</label>
     <input id="f_window" placeholder="bv. tot 2030">
+    <label>Karakter</label>
+    <textarea id="f_character" rows="4" placeholder="Beschrijving van smaak, stijl, druivenmix..."></textarea>
+    <label>Openen &amp; serveren (één tip per regel)</label>
+    <textarea id="f_serving" rows="4" placeholder="Serveer op 16-18°C&#10;Karaffeer 30 minuten..."></textarea>
     <button class="save-btn" id="saveBtn">Opslaan</button>
   </div>
 
@@ -339,9 +393,28 @@ function render() {
         ${!w.drunk ? `<button class="btn" data-action="drunk" data-id="${w.id}" ${writable?'':'disabled'}>Opgedronken</button>` : `<button class="btn" data-action="undrunk" data-id="${w.id}" ${writable?'':'disabled'}>Terugzetten</button>`}
         <button class="btn danger" data-action="delete" data-id="${w.id}" ${writable?'':'disabled'}>Verwijderen</button>
       </div>
+      ${(w.character || (w.serving && w.serving.length)) ? renderDetail(w) : ''}
     `;
     list.appendChild(card);
   });
+}
+
+function renderDetail(w) {
+  const characterHtml = (w.character || '')
+    .split(/\n\s*\n/)
+    .map(p => p.trim())
+    .filter(Boolean)
+    .map(p => `<p>${escapeHtml(p)}</p>`)
+    .join('');
+  const servingLines = Array.isArray(w.serving) ? w.serving : (w.serving ? String(w.serving).split('\n') : []);
+  const servingHtml = servingLines.map(l => l.trim()).filter(Boolean).map(l => `<li>${escapeHtml(l)}</li>`).join('');
+  return `
+    <button class="detail-toggle" data-action="toggleDetail" data-id="${w.id}">Meer info</button>
+    <div class="detail-panel" id="detail-${w.id}">
+      ${characterHtml ? `<div class="detail-section"><h4>Karakter</h4>${characterHtml}</div>` : ''}
+      ${servingHtml ? `<div class="detail-section"><h4>Openen &amp; serveren</h4><ul class="detail-list">${servingHtml}</ul></div>` : ''}
+    </div>
+  `;
 }
 
 document.getElementById('list').addEventListener('click', async (e) => {
@@ -349,6 +422,11 @@ document.getElementById('list').addEventListener('click', async (e) => {
   if (!btn || btn.disabled || !dbRef) return;
   const id = btn.dataset.id;
   const action = btn.dataset.action;
+  if (action === 'toggleDetail') {
+    const panel = document.getElementById('detail-' + id);
+    if (panel) panel.classList.toggle('open');
+    return;
+  }
   try {
     if (action === 'drunk') await dbRef.collection('wines').doc(id).update({ drunk: true });
     if (action === 'undrunk') await dbRef.collection('wines').doc(id).update({ drunk: false });
@@ -385,6 +463,7 @@ document.getElementById('saveBtn').addEventListener('click', async () => {
   if (!dbRef) return;
   const name = document.getElementById('f_name').value.trim();
   if (!name) { document.getElementById('f_name').focus(); return; }
+  const servingLines = document.getElementById('f_serving').value.split('\n').map(l => l.trim()).filter(Boolean);
   const newWine = {
     name: name,
     grape: document.getElementById('f_grape').value.trim(),
@@ -392,11 +471,13 @@ document.getElementById('saveBtn').addEventListener('click', async () => {
     year: parseInt(document.getElementById('f_year').value) || null,
     status: document.getElementById('f_status').value,
     window: document.getElementById('f_window').value.trim(),
+    character: document.getElementById('f_character').value.trim(),
+    serving: servingLines,
     drunk: false
   };
   try {
     await dbRef.collection('wines').add(newWine);
-    ['f_name','f_grape','f_region','f_year','f_window'].forEach(id => document.getElementById(id).value = '');
+    ['f_name','f_grape','f_region','f_year','f_window','f_character','f_serving'].forEach(id => document.getElementById(id).value = '');
     document.getElementById('addForm').classList.remove('open');
   } catch (err) {
     showNotice('Fles kon niet worden toegevoegd. Probeer opnieuw.');
