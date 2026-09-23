@@ -634,17 +634,32 @@ const keywordMap = {
   "entrecote":["roodvlees","bbq"], "runderlap":["roodvlees"], "stoofvlees":["roodvlees"], "stoofpot":["roodvlees"],
   "gehakt":["roodvlees","pasta"], "hamburger":["roodvlees","bbq"], "lamsvlees":["roodvlees","wild"], "lam":["roodvlees","wild"],
   "wild":["wild"], "hert":["wild"], "ree":["wild"], "everzwijn":["wild"], "fazant":["wild","gevogelte"], "haas":["wild"],
+  "konijn":["wild","gevogelte"], "gevuldekip":["gevogelte"],
   "vis":["vis"], "zalm":["vis"], "tonijn":["vis"], "kabeljauw":["vis"], "heilbot":["vis"], "makreel":["vis"], "forel":["vis"], "zeebaars":["vis"],
+  "haring":["vis"], "paling":["vis","romig"], "tilapia":["vis"], "schol":["vis"], "sardines":["vis"],
   "garnalen":["schaaldieren"], "mosselen":["schaaldieren"], "kreeft":["schaaldieren","romig"], "oesters":["schaaldieren"],
-  "schaaldieren":["schaaldieren"], "krab":["schaaldieren"], "scampi":["schaaldieren"],
-  "kip":["gevogelte"], "gevogelte":["gevogelte"], "kalkoen":["gevogelte"], "eend":["gevogelte"], "kipfilet":["gevogelte"],
+  "schaaldieren":["schaaldieren"], "krab":["schaaldieren"], "scampi":["schaaldieren"], "inktvis":["schaaldieren","vis"], "calamares":["schaaldieren","vis"],
+  "kip":["gevogelte"], "gevogelte":["gevogelte"], "kalkoen":["gevogelte"], "eend":["gevogelte"], "kipfilet":["gevogelte"], "kippenpoot":["gevogelte"],
   "pasta":["pasta"], "spaghetti":["pasta"], "lasagne":["pasta"], "risotto":["pasta","romig"], "pizza":["pasta"], "macaroni":["pasta"],
+  "gnocchi":["pasta","romig"], "ravioli":["pasta","romig"], "penne":["pasta"], "tagliatelle":["pasta"],
   "kaas":["kaas"], "kaasplankje":["kaas"], "geitenkaas":["kaas"], "brie":["kaas"], "parmezaan":["kaas"], "kaasplank":["kaas"],
+  "belegenkaas":["kaas"], "oudekaas":["kaas"], "camembert":["kaas"], "gorgonzola":["kaas","romig"],
   "sushi":["aziatisch","vis"], "thai":["aziatisch"], "curry":["aziatisch","kruidig"], "aziatisch":["aziatisch"],
-  "wok":["aziatisch"], "indisch":["aziatisch","kruidig"],
-  "bbq":["bbq","roodvlees"], "barbecue":["bbq","roodvlees"], "gegrild":["bbq"],
+  "wok":["aziatisch"], "indisch":["aziatisch","kruidig"], "chinees":["aziatisch"], "japans":["aziatisch","vis"],
+  "sate":["aziatisch","kruidig"], "saté":["aziatisch","kruidig"], "loempia":["aziatisch"], "dimsum":["aziatisch"],
+  "mexicaans":["kruidig"], "taco":["kruidig"], "burrito":["kruidig"], "fajita":["kruidig"], "chili":["kruidig","roodvlees"],
+  "couscous":["aziatisch","kruidig"], "falafel":["aziatisch","kruidig"], "hummus":["aperitief"],
+  "bbq":["bbq","roodvlees"], "barbecue":["bbq","roodvlees"], "gegrild":["bbq"], "spareribs":["bbq","roodvlees"],
   "salade":["aperitief"], "borrel":["aperitief"], "aperitief":["aperitief"], "lunch":["aperitief"],
-  "romig":["romig"], "roomsaus":["romig"], "pittig":["kruidig"], "scherp":["kruidig"], "asperges":["vis","gevogelte"]
+  "tapas":["aperitief","kaas"], "vleeswaren":["aperitief","kaas"], "charcuterie":["aperitief","kaas"],
+  "bitterballen":["aperitief"], "kroket":["aperitief"], "friet":["aperitief"], "patat":["aperitief"], "frikandel":["bbq","aperitief"],
+  "romig":["romig"], "roomsaus":["romig"], "pittig":["kruidig"], "scherp":["kruidig"], "asperges":["vis","gevogelte"],
+  "witlof":["kaas","romig","gevogelte"], "witloof":["kaas","romig","gevogelte"],
+  "spruitjes":["roodvlees"], "boerenkool":["roodvlees"], "andijvie":["roodvlees"], "rodekool":["roodvlees","wild"],
+  "zuurkool":["roodvlees"], "stamppot":["roodvlees"], "hutspot":["roodvlees"], "erwtensoep":["roodvlees"],
+  "champignons":["romig","pasta"], "paddenstoelen":["romig","pasta"], "pompoen":["romig","gevogelte"],
+  "eieren":["aperitief","romig"], "omelet":["aperitief","romig"], "quiche":["romig","kaas"],
+  "pesto":["pasta"], "tomatensaus":["pasta"], "linzen":["pasta","roodvlees"], "witte bonen":["pasta"]
 };
 
 function inferTagsFromGrape(grape) {
@@ -666,7 +681,13 @@ function findPairings(query) {
   for (const [key, tags] of Object.entries(keywordMap)) {
     if (q.includes(key)) tags.forEach(t => matchedTags.add(t));
   }
-  if (matchedTags.size === 0) return { tags: [], results: [], rest: [] };
+
+  if (matchedTags.size === 0) {
+    // Geen keyword herkend: val terug op een veelzijdige aanbeveling in plaats van niets te tonen.
+    const active = wines.filter(w => !w.drunk).map(w => ({ wine: w, overlap: 0, tags: [] }));
+    active.sort((a, b) => statusOrder[a.wine.status] - statusOrder[b.wine.status]);
+    return { tags: [], results: active.slice(0, 3), rest: active.slice(3), fallback: true };
+  }
 
   const scored = wines.filter(w => !w.drunk).map(w => {
     const wTags = inferTagsFromGrape(w.grape);
@@ -674,17 +695,25 @@ function findPairings(query) {
     return { wine: w, overlap, tags: wTags };
   }).filter(x => x.overlap > 0);
 
+  if (scored.length === 0) {
+    // Wel een herkend gerecht, maar geen fles met overlappende stijl: ook dan iets tonen i.p.v. niets.
+    const active = wines.filter(w => !w.drunk).map(w => ({ wine: w, overlap: 0, tags: [] }));
+    active.sort((a, b) => statusOrder[a.wine.status] - statusOrder[b.wine.status]);
+    return { tags: [...matchedTags], results: active.slice(0, 3), rest: active.slice(3), fallback: true };
+  }
+
   scored.sort((a, b) => {
     const sd = statusOrder[a.wine.status] - statusOrder[b.wine.status];
     if (sd !== 0) return sd;
     return b.overlap - a.overlap;
   });
 
-  return { tags: [...matchedTags], results: scored.slice(0, 3), rest: scored.slice(3) };
+  return { tags: [...matchedTags], results: scored.slice(0, 3), rest: scored.slice(3), fallback: false };
 }
 
-function pairingReason(w, matchedTags) {
+function pairingReason(w, matchedTags, fallback) {
   if (w.status === 'now') return 'Nu op dronk — een goede keuze voor vanavond.';
+  if (fallback) return 'Veelzijdige keuze die bij de meeste gerechten past.';
   const g = (w.grape || '').toLowerCase();
   if (matchedTags.includes('vis') && /riesling|chardonnay|sauvignon/.test(g)) return 'Frisse zuren passen goed bij vis.';
   if (matchedTags.includes('roodvlees')) return 'Deze krachtige rode wijn kan het vlees goed aan.';
@@ -693,7 +722,7 @@ function pairingReason(w, matchedTags) {
   return 'Past qua stijl bij dit gerecht.';
 }
 
-function pairingCardHtml(w, tags) {
+function pairingCardHtml(w, tags, fallback) {
   return `
     <div class="pairing-card">
       <div class="card-top">
@@ -703,7 +732,7 @@ function pairingCardHtml(w, tags) {
         </div>
         <span class="badge ${w.status}">${statusLabel[w.status]}</span>
       </div>
-      <div class="pairing-why">${escapeHtml(pairingReason(w, tags))}</div>
+      <div class="pairing-why">${escapeHtml(pairingReason(w, tags, fallback))}</div>
     </div>
   `;
 }
@@ -711,21 +740,18 @@ function pairingCardHtml(w, tags) {
 function renderPairingResults(query) {
   const box = document.getElementById('pairingResults');
   if (!query.trim()) { box.innerHTML = ''; return; }
-  const { tags, results, rest } = findPairings(query);
-  if (tags.length === 0) {
-    box.innerHTML = '<div class="pairing-empty">Geen match gevonden voor dit gerecht — probeer een ander woord (bv. "vis", "steak", "pasta").</div>';
-    return;
-  }
+  const { tags, results, rest, fallback } = findPairings(query);
   if (results.length === 0) {
-    box.innerHTML = '<div class="pairing-empty">Geen fles in de kelder past goed hierbij.</div>';
+    box.innerHTML = '<div class="pairing-empty">Je kelder is nog leeg — voeg eerst een fles toe.</div>';
     return;
   }
+  const introHtml = fallback ? `<div class="pairing-more-hint">Geen exacte match voor "${escapeHtml(query)}" — hier zijn veelzijdige aanbevelingen:</div>` : '';
   const moreHtml = rest.length ? `<button class="pairing-more-btn" id="showMoreBtn" type="button">Toon ${rest.length} overige passende wijn${rest.length === 1 ? '' : 'en'}</button>` : '';
-  box.innerHTML = results.map(r => pairingCardHtml(r.wine, tags)).join('') + moreHtml;
+  box.innerHTML = introHtml + results.map(r => pairingCardHtml(r.wine, tags, fallback)).join('') + moreHtml;
   if (rest.length) {
     document.getElementById('showMoreBtn').addEventListener('click', () => {
       document.getElementById('showMoreBtn').remove();
-      box.insertAdjacentHTML('beforeend', rest.map(r => pairingCardHtml(r.wine, tags)).join(''));
+      box.insertAdjacentHTML('beforeend', rest.map(r => pairingCardHtml(r.wine, tags, fallback)).join(''));
     });
   }
 }
