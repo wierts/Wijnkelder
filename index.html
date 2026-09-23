@@ -749,7 +749,7 @@ const statusOrder = { now: 0, soon: 1, wait: 2 };
 const COLORS = { rood: 'Rood', wit: 'Wit', rose: 'Rosé', mousserend: 'Mousserend', dessert: 'Dessert' };
 const COUNTRIES = {
   FR: 'Frankrijk', IT: 'Italië', ES: 'Spanje', PT: 'Portugal', DE: 'Duitsland', AT: 'Oostenrijk',
-  GR: 'Griekenland', HU: 'Hongarije', SI: 'Slovenië', NL: 'Nederland', US: 'Verenigde Staten',
+  GR: 'Griekenland', CY: 'Cyprus', HU: 'Hongarije', SI: 'Slovenië', NL: 'Nederland', US: 'Verenigde Staten',
   AR: 'Argentinië', CL: 'Chili', ZA: 'Zuid-Afrika', AU: 'Australië', NZ: 'Nieuw-Zeeland'
 };
 
@@ -779,7 +779,8 @@ function deriveCountry(region) {
     ['PT', /portugal|douro|d[aã]o|alentejo|vinho verde|bairrada|madeira/],
     ['DE', /duitsland|germany|deutschland|mosel|pfalz|rheingau|rheinhessen|nahe|baden|franken|w[uü]rttemberg/],
     ['AT', /oostenrijk|austria|[oö]sterreich|wachau|kamptal|kremstal|burgenland|steiermark/],
-    ['GR', /griekenland|greece|santorini|naoussa/],
+    ['CY', /cyprus|cypern|cypr[iu]|chypre|zypern|limassol|lemesos|paphos|pafos|troodos|krasochoria|commandaria|xynisteri|maratheftiko|yiannoudi/],
+    ['GR', /griek|greece|gr[eè]ce|santorini|naoussa|nemea|peloponn|makedon|macedon|kreta|crete|attica|attiki|amyntaio|mantinia|rapsani|paros|kefalonia|cephalonia|assyrtiko|xinomavro|agiorgitiko|moschofilero|malagousia/],
     ['HU', /hongarije|hungary|tokaj/],
     ['US', /verenigde staten|usa|california|napa|sonoma|oregon|washington/],
     ['AR', /argentin|mendoza/], ['CL', /chil[ie]|maipo|colchagua|casablanca/],
@@ -800,7 +801,7 @@ function deriveColor(text) {
   return '';
 }
 const colorOf = w => w.color || deriveColor([w.grape, w.name, w.region].join(' '));
-const countryOf = w => (w.country || deriveCountry(w.region)).toUpperCase();
+const countryOf = w => (w.country || deriveCountry(w.region) || deriveCountry([w.name, w.grape].join(' '))).toUpperCase();
 const CURRENT_YEAR = new Date().getFullYear();
 // Drinkvenster als jaartallen. Zijn de velden nog leeg, dan halen we de jaren uit de oude tekst ("2019-2026", "tot 2030", "vanaf 2028").
 function parseWindowText(text) {
@@ -907,10 +908,14 @@ document.getElementById('stats').addEventListener('click', e => {
 });
 
 /* ---------- chips + filters ---------- */
-function topCountries(n) {
+// Alle landen die in de kelder voorkomen, meeste flessen eerst. Nieuwe landen verschijnen vanzelf als chip.
+function cellarCountries() {
   const counts = {};
   wines.filter(w => !w.drunk).forEach(w => { const c = countryOf(w); if (c) counts[c] = (counts[c] || 0) + (w.qty || 1); });
-  return Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, n).map(([c]) => c);
+  if (state.country && !counts[state.country]) counts[state.country] = 0;
+  return Object.entries(counts)
+    .sort((a, b) => b[1] - a[1] || (COUNTRIES[a[0]] || a[0]).localeCompare(COUNTRIES[b[0]] || b[0]))
+    .map(([c]) => c);
 }
 function renderChips() {
   const isAll = state.status === 'all' && !state.color && !state.country;
@@ -922,7 +927,7 @@ function renderChips() {
     chip('data-chip="status" data-v="soon"', 'Binnenkort', state.status === 'soon'),
     chip('data-chip="color" data-v="rood"', 'Rood', state.color === 'rood'),
     chip('data-chip="color" data-v="wit"', 'Wit', state.color === 'wit'),
-    ...topCountries(3).map(c => chip(`data-chip="country" data-v="${c}" title="${escapeHtml(COUNTRIES[c] || c)}" aria-label="${escapeHtml(COUNTRIES[c] || c)}"`, flag(c), state.country === c, ' flag')),
+    ...cellarCountries().map(c => chip(`data-chip="country" data-v="${c}" title="${escapeHtml(COUNTRIES[c] || c)}" aria-label="${escapeHtml(COUNTRIES[c] || c)}"`, flag(c), state.country === c, ' flag')),
     '<span class="chip-spacer"></span>',
     `<button class="chip filters-btn${state.filtersOpen ? ' active' : ''}" id="filtersBtn" aria-expanded="${state.filtersOpen}" aria-controls="filterGrid" type="button">⚙ Filters</button>`
   ];
