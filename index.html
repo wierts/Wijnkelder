@@ -552,6 +552,10 @@
   <div class="modal-box" id="confirmModalBox"></div>
 </div>
 
+<div class="modal-overlay" id="editModalOverlay">
+  <div class="modal-box" id="editModalBox"></div>
+</div>
+
 <div id="toast" role="status" aria-live="polite"></div>
 
 <script>
@@ -833,6 +837,76 @@ document.getElementById('confirmModalOverlay').addEventListener('click', (e) => 
   }
 });
 
+function openEditModal(id) {
+  const wine = wines.find(w => String(w.id) === String(id));
+  if (!wine) return;
+  const servingText = (Array.isArray(wine.serving) ? wine.serving : (wine.serving ? String(wine.serving).split('\n') : [])).join('\n');
+  const box = document.getElementById('editModalBox');
+  box.innerHTML = `
+    <button class="modal-close" data-action="closeEditModal" aria-label="Sluiten" type="button">✕</button>
+    <h3>Fles bewerken</h3>
+    <div class="import-panel open">
+      <label for="e_producer">Producent / huis</label>
+      <input id="e_producer" value="${escapeHtml(wine.producer || '')}">
+      <label for="e_name">Naam / cuvée *</label>
+      <input id="e_name" value="${escapeHtml(wine.name || '')}">
+      <label for="e_grape">Druif / stijl</label>
+      <input id="e_grape" value="${escapeHtml(wine.grape || '')}">
+      <label for="e_region">Regio / land</label>
+      <input id="e_region" value="${escapeHtml(wine.region || '')}">
+      <label for="e_year">Jaargang</label>
+      <input id="e_year" type="number" value="${wine.year || ''}">
+      <label for="e_status">Status</label>
+      <select id="e_status">
+        <option value="now" ${wine.status==='now'?'selected':''}>Nu drinken</option>
+        <option value="soon" ${wine.status==='soon'?'selected':''}>Binnenkort</option>
+        <option value="wait" ${wine.status==='wait'?'selected':''}>Kan wachten</option>
+      </select>
+      <label for="e_window">Drinkvenster / notitie</label>
+      <input id="e_window" value="${escapeHtml(wine.window || '')}">
+      <label for="e_character">Karakter</label>
+      <textarea id="e_character" rows="4">${escapeHtml(wine.character || '')}</textarea>
+      <label for="e_serving">Openen &amp; serveren (één tip per regel)</label>
+      <textarea id="e_serving" rows="4">${escapeHtml(servingText)}</textarea>
+    </div>
+    <div class="confirm-actions">
+      <button class="btn" data-action="closeEditModal" type="button">Annuleren</button>
+      <button class="btn primary" id="confirmEditBtn" type="button">Opslaan</button>
+    </div>
+  `;
+  document.getElementById('editModalOverlay').classList.add('open');
+  document.getElementById('confirmEditBtn').addEventListener('click', async () => {
+    const name = document.getElementById('e_name').value.trim();
+    if (!name) { document.getElementById('e_name').focus(); return; }
+    const updated = {
+      name: name,
+      producer: document.getElementById('e_producer').value.trim(),
+      grape: document.getElementById('e_grape').value.trim(),
+      region: document.getElementById('e_region').value.trim(),
+      year: parseInt(document.getElementById('e_year').value) || null,
+      status: document.getElementById('e_status').value,
+      window: document.getElementById('e_window').value.trim(),
+      character: document.getElementById('e_character').value.trim(),
+      serving: document.getElementById('e_serving').value.split('\n').map(l => l.trim()).filter(Boolean)
+    };
+    try {
+      const res = await fetch(API_URL + '?id=' + encodeURIComponent(id), { method: 'PATCH', body: JSON.stringify(updated) });
+      if (!res.ok) throw new Error('save failed');
+      document.getElementById('editModalOverlay').classList.remove('open');
+      await loadWines();
+      render();
+      showToast(`'${updated.name}' bijgewerkt.`);
+    } catch (err) {
+      showNotice('Wijzigingen konden niet worden opgeslagen. Probeer opnieuw.');
+    }
+  });
+}
+document.getElementById('editModalOverlay').addEventListener('click', (e) => {
+  if (e.target.id === 'editModalOverlay' || e.target.closest('[data-action="closeEditModal"]')) {
+    document.getElementById('editModalOverlay').classList.remove('open');
+  }
+});
+
 let toastTimer = null;
 function showToast(msg) {
   const t = document.getElementById('toast');
@@ -926,6 +1000,7 @@ function render() {
       </div>
       <div class="actions">
         ${!w.drunk ? `<button class="btn primary" data-action="drunk" data-id="${w.id}" ${writable?'':'disabled'} type="button">Opgedronken</button>` : `<button class="btn" data-action="undrunk" data-id="${w.id}" ${writable?'':'disabled'} type="button">Terugzetten</button>`}
+        <button class="btn" data-action="edit" data-id="${w.id}" ${writable?'':'disabled'} type="button">Bewerken</button>
         <button class="btn ghost-danger" data-action="delete" data-id="${w.id}" ${writable?'':'disabled'} type="button">Verwijderen</button>
       </div>
       ${renderDetail(w)}
@@ -946,6 +1021,7 @@ document.getElementById('list').addEventListener('click', async (e) => {
     return;
   }
   if (action === 'delete') { openDeleteConfirm(id); return; }
+  if (action === 'edit') { openEditModal(id); return; }
   const wine = wines.find(w => String(w.id) === String(id));
   try {
     if (action === 'drunk') {
