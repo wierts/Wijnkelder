@@ -1649,7 +1649,7 @@ document.addEventListener('input', e => {
 
 /* ---------- etiket scannen (Gemini) ---------- */
 const SCAN_URL = 'api/scan.php';
-const scanState = { blob: null };
+const scanState = { blob: null, file: null };
 // Foto verkleinen in de browser: sneller uploaden en minder data naar Gemini
 function shrinkImage(file, max = 1600) {
   return new Promise((resolve, reject) => {
@@ -1702,7 +1702,10 @@ function fillFromScan(sw) {
 }
 async function runScan(file) {
   const box = document.getElementById('scanResult');
+  scanState.file = file;
   box.innerHTML = '<div class="scan-busy"><span class="spinner" aria-hidden="true"></span> Etiket wordt gelezen…</div>';
+  // Bij een mislukte scan: knop om dezelfde foto opnieuw te versturen
+  const retry = `<div class="confirm-actions" style="margin-top:8px"><button class="btn save-fill" data-scan-retry type="button">↻ Opnieuw scannen</button><label class="btn" for="scanInput">📷 Nieuwe foto</label></div>`;
   try {
     const blob = await shrinkImage(file);
     scanState.blob = blob;
@@ -1714,7 +1717,7 @@ async function runScan(file) {
     if (!res.ok) {
       box.innerHTML = `<div class="notice">${j.error === 'not_configured'
         ? 'Scannen is nog niet ingesteld. Zet je Gemini-sleutel in <code>api/config.php</code>.'
-        : escapeHtml(j.error || 'Scannen mislukt. Probeer een scherpere foto.')}</div>`;
+        : escapeHtml(j.error || 'Scannen mislukt. Probeer een scherpere foto.')}</div>${j.error === 'not_configured' ? '' : retry}`;
       return;
     }
     const sw = j.wine || {};
@@ -1734,10 +1737,11 @@ async function runScan(file) {
     }
     box.innerHTML = html;
   } catch (err) {
-    box.innerHTML = '<div class="notice">Scannen mislukt. Controleer je verbinding en probeer opnieuw.</div>';
+    box.innerHTML = '<div class="notice">Scannen mislukt. Controleer je verbinding en probeer opnieuw.</div>' + retry;
   }
 }
 document.getElementById('addModalOverlay').addEventListener('click', async e => {
+  if (e.target.closest('[data-scan-retry]') && scanState.file) return runScan(scanState.file);
   const o = e.target.closest('[data-scan-open]');
   if (o) { document.getElementById('addModalOverlay').classList.remove('open'); return openDetailModal(o.dataset.scanOpen); }
   const p = e.target.closest('[data-scan-plus]');
@@ -1761,7 +1765,7 @@ document.addEventListener('change', e => {
 });
 
 function openAddModal() {
-  scanState.blob = null;
+  scanState.blob = null; scanState.file = null;
   document.getElementById('panel-single').innerHTML = `
     <label class="scan-btn" for="scanInput">📷 Scan etiket<span>Maak een foto van het etiket; de velden worden automatisch ingevuld</span></label>
     <input id="scanInput" type="file" accept="image/*" capture="environment" hidden>
