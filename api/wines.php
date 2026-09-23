@@ -37,6 +37,19 @@ function clean_notes($v) {
     return trim((string) $v);
 }
 
+function clean_short($v) {
+    return mb_substr(trim((string) $v), 0, 160);
+}
+
+// Alleen eigen uploads (img/etiketten/...) of een https-link naar een afbeelding.
+function clean_image($v) {
+    $v = trim((string) $v);
+    if ($v === '') return '';
+    if (preg_match('#^img/etiketten/[A-Za-z0-9._-]+$#', $v)) return $v;
+    if (preg_match('#^https://[^\s"<>]+$#i', $v)) return mb_substr($v, 0, 500);
+    return '';
+}
+
 // Extra velden die via POST en PATCH gezet kunnen worden: JSON-sleutel => [kolom, opschoonfunctie]
 const EXTRA_FIELDS = [
     'color' => ['color', 'clean_color'],
@@ -47,6 +60,9 @@ const EXTRA_FIELDS = [
     'purchaseDate' => ['purchase_date', 'clean_date'],
     'purchasePrice' => ['purchase_price', 'clean_price'],
     'notes' => ['notes', 'clean_notes'],
+    'image' => ['image', 'clean_image'],
+    'marketPrice' => ['market_price', 'clean_price'],
+    'marketNote' => ['market_note', 'clean_short'],
 ];
 
 $method = $_SERVER['REQUEST_METHOD'];
@@ -77,6 +93,9 @@ switch ($method) {
                 'purchaseDate' => $r['purchase_date'] ?? null,
                 'purchasePrice' => isset($r['purchase_price']) ? (float) $r['purchase_price'] : null,
                 'notes' => $r['notes'] ?? '',
+                'image' => $r['image'] ?? '',
+                'marketPrice' => isset($r['market_price']) ? (float) $r['market_price'] : null,
+                'marketNote' => $r['market_note'] ?? '',
             ];
         }, $rows);
         echo json_encode($wines);

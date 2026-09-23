@@ -21,8 +21,8 @@
     --drunk: #8f867d; --drunk-bg: #efece8;
     --lbl-rood: #6e1a26; --lbl-wit: #d9c68a; --lbl-rose: #e3a3a6; --lbl-mousserend: #c9c2a6; --lbl-dessert: #b7772a; --lbl-onbekend: #a59b90;
     --lbl-ink-dark: #fbf4ea; --lbl-ink-light: #3b2c1c;
-    --overlay-1: rgba(16,10,8,0.60);
-    --overlay-2: rgba(16,10,8,0.78);
+    --overlay-1: rgba(16,10,8,0.72);
+    --overlay-2: rgba(16,10,8,0.88);
     --radius: 14px;
     --radius-sm: 10px;
     --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
@@ -39,7 +39,7 @@
       --soon: #e0b64c; --soon-bg: #3a3020;
       --wait: #8fb4e6; --wait-bg: #1e2a3a;
       --drunk: #948a80; --drunk-bg: #2c2825;
-      --overlay-1: rgba(6,4,3,0.68); --overlay-2: rgba(6,4,3,0.85);
+      --overlay-1: rgba(6,4,3,0.78); --overlay-2: rgba(6,4,3,0.92);
     }
   }
   :root[data-theme="dark"] {
@@ -50,7 +50,7 @@
     --soon: #e0b64c; --soon-bg: #3a3020;
     --wait: #8fb4e6; --wait-bg: #1e2a3a;
     --drunk: #948a80; --drunk-bg: #2c2825;
-    --overlay-1: rgba(6,4,3,0.68); --overlay-2: rgba(6,4,3,0.85);
+    --overlay-1: rgba(6,4,3,0.78); --overlay-2: rgba(6,4,3,0.92);
   }
   html { scroll-padding-top: env(safe-area-inset-top, 0px); }
   * { box-sizing: border-box; }
@@ -65,7 +65,8 @@
     content: ""; position: fixed; inset: 0; z-index: -2;
     background-image: url('img/wijnkelder-achtergrond.jpg');
     background-size: cover; background-position: center 30%; background-repeat: no-repeat;
-    filter: brightness(0.72) saturate(0.88);
+    filter: brightness(0.6) saturate(0.7) blur(2px);
+    transform: scale(1.02);
   }
   body::after {
     content: ""; position: fixed; inset: 0; z-index: -1;
@@ -87,6 +88,11 @@
     border-radius: 10px; padding: 9px 14px; font-size: 0.85rem; font-weight: 600; cursor: pointer; white-space: nowrap;
   }
   .add-btn:hover { background: rgba(255,255,255,0.22); }
+  .add-btn.ghost { border-color: transparent; background: transparent; }
+  .add-btn.ghost:hover, .add-btn.ghost[aria-pressed="true"] { background: rgba(255,255,255,0.16); }
+  .header-actions { display: flex; gap: 6px; align-items: center; }
+  .head-counts { display: flex; flex-wrap: wrap; gap: 4px 0; }
+  .head-counts span + span::before { content: "|"; opacity: 0.55; margin: 0 8px; }
 
   .container { max-width: 760px; margin: 0 auto; padding: 16px 16px 48px; }
   .panel {
@@ -140,10 +146,19 @@
   .meta-line { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; font-size: 0.78rem; color: var(--text-dim); }
   .reset-link { background: none; border: none; color: var(--accent); font-size: 0.78rem; cursor: pointer; padding: 0; }
 
-  /* --- pairing + surprise --- */
-  .duo { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 12px; margin-bottom: 26px; }
-  .duo h2 { font-size: 0.98rem; margin: 0 0 4px; font-weight: 700; }
-  .duo .lead { font-size: 0.8rem; color: var(--text-dim); margin: 0 0 10px; line-height: 1.4; }
+  /* --- snelknoppen onder de zoekbalk --- */
+  .quick { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-bottom: 24px; }
+  .quick-btn {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    border: 1px solid var(--border); background: var(--card-bg-soft); color: var(--text);
+    border-radius: 12px; padding: 12px 10px; font-size: 0.9rem; font-weight: 600; cursor: pointer; min-height: 48px;
+  }
+  .quick-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .quick-btn[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .quick-btn .ico { font-size: 1.1rem; line-height: 1; }
+
+  /* --- pairing + surprise (in vensters) --- */
+  .lead { font-size: 0.84rem; color: var(--text-dim); margin: 0 0 12px; line-height: 1.45; }
   .pairing-input {
     width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border);
     background: var(--card-bg); color: var(--text); font-size: 0.92rem;
@@ -155,19 +170,79 @@
     background: var(--accent); color: #fff; font-weight: 600; font-size: 0.85rem; cursor: pointer;
   }
   .solid-btn:hover { background: var(--accent-strong); }
-  .surprise-panel { display: flex; flex-direction: column; }
-  .surprise-btn {
-    align-self: center; margin: auto 0; border: 1px dashed var(--accent); background: transparent; color: var(--accent);
-    border-radius: 12px; padding: 12px 22px; font-size: 0.95rem; font-weight: 600; cursor: pointer;
-  }
-  .surprise-btn:hover { background: var(--accent-tint); }
-  .result-box { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
+  .result-box { display: flex; flex-direction: column; gap: 8px; margin-top: 14px; }
   .result-box:empty { display: none; }
-  .mini-card { border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; background: var(--card-bg); }
+  .mini-card {
+    border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; background: var(--card-bg);
+    display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 12px; align-items: start;
+    width: 100%; text-align: left; cursor: pointer; font: inherit; color: inherit;
+  }
+  .mini-card:hover { border-color: var(--accent); }
+  .mini-card .etiket { width: 40px; height: 56px; grid-row: auto; padding: 4px; }
+  .mini-card .etiket .e-year { font-size: 0.72rem; }
+  .mini-card .etiket .e-kind, .mini-card .etiket .e-rule { display: none; }
   .mini-top { display: flex; justify-content: space-between; gap: 8px; align-items: flex-start; }
   .mini-title { font-weight: 700; font-size: 0.9rem; }
   .mini-sub { font-size: 0.78rem; color: var(--text-dim); margin-top: 2px; }
   .mini-why { font-size: 0.78rem; color: var(--accent); margin-top: 6px; }
+  .section-kicker { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; color: var(--text-dim); margin: 6px 0 2px; }
+  .section-kicker.center { text-align: center; }
+
+  /* Uitgelichte wijn (Verras me, beste match) */
+  .feature { text-align: center; padding: 6px 0 2px; }
+  .feature .etiket { width: 120px; height: 164px; margin: 10px auto 14px; grid-row: auto; }
+  .feature .etiket .e-year { font-size: 1.6rem; }
+  .feature-name { font-family: var(--serif); font-size: 1.3rem; font-weight: 700; letter-spacing: 0.03em; text-transform: uppercase; line-height: 1.25; }
+  .feature-year { font-family: var(--serif); font-size: 1.1rem; margin-top: 2px; }
+  .feature-producer { font-size: 0.92rem; margin-top: 8px; }
+  .feature-sub { font-size: 0.84rem; color: var(--text-dim); margin-top: 3px; }
+  .feature .badge { margin: 12px 0 4px; }
+  .feature-why { text-align: left; background: var(--accent-tint); border-radius: 10px; padding: 10px 12px; margin-top: 14px; font-size: 0.86rem; line-height: 1.45; }
+  .feature-why strong { display: block; font-size: 0.72rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--accent); margin-bottom: 2px; }
+  .feature-facts { display: flex; justify-content: space-between; margin-top: 12px; font-size: 0.9rem; font-weight: 600; }
+  .pick-row { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin: 2px 0 6px; }
+  .pick-row .chip { padding: 6px 12px; }
+  .match {
+    display: grid; grid-template-columns: 86px minmax(0, 1fr); gap: 14px; text-align: left;
+    border: 1px solid var(--border); border-radius: 12px; padding: 12px; background: var(--card-bg);
+  }
+  .match .etiket { width: 86px; height: 118px; margin: 0; }
+  .match .feature-name { font-size: 1.05rem; text-transform: none; letter-spacing: 0; font-family: inherit; }
+  .match .feature-producer { margin-top: 3px; font-size: 0.86rem; }
+  .match .badge { margin: 8px 0 0; }
+  .match .feature-why { margin-top: 10px; }
+  .match .confirm-actions { margin-top: 12px; }
+
+  /* Sterren (opgedronken) */
+  .stars { display: flex; justify-content: center; gap: 4px; margin: 6px 0 4px; }
+  .star {
+    background: none; border: none; cursor: pointer; font-size: 2rem; line-height: 1; padding: 4px;
+    color: var(--border); transition: transform 0.1s ease;
+  }
+  .star.on { color: #d4a017; }
+  .star:hover { transform: scale(1.12); }
+  .check-row { display: flex; align-items: center; gap: 10px; margin-top: 12px; font-size: 0.9rem; cursor: pointer; }
+  .check-row input { width: 20px; height: 20px; accent-color: var(--accent); }
+
+  /* Historie */
+  .history-summary { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin-bottom: 12px; }
+  .history-summary .stat { cursor: default; }
+  .fav-panel { margin-bottom: 16px; }
+  .fav-panel h2 { font-size: 0.95rem; margin: 0 0 8px; }
+  .fav-list { display: flex; flex-wrap: wrap; gap: 6px; }
+  .fav-list .chip { cursor: default; }
+  .t-card { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 12px; }
+  .t-card .t-stars { color: #d4a017; letter-spacing: 1px; white-space: nowrap; }
+  .t-card .t-date { font-size: 0.78rem; color: var(--text-dim); }
+  .t-card .t-note { grid-column: 1 / -1; font-size: 0.88rem; line-height: 1.5; margin-top: 6px; white-space: pre-line; }
+  .t-card .t-rebuy { grid-column: 1 / -1; font-size: 0.78rem; color: var(--now); font-weight: 600; margin-top: 4px; }
+  .t-card .t-del { justify-self: end; background: none; border: none; color: var(--text-dim); font-size: 0.75rem; cursor: pointer; padding: 2px 0; }
+  .t-card .t-del:hover { color: #b23a2e; text-decoration: underline; }
+  .card.t-card { display: grid; grid-template-columns: minmax(0, 1fr) auto; }
+
+  /* Kaart kort laten oplichten na "Deze wordt het" */
+  @keyframes pulse { 0%, 100% { box-shadow: 0 0 0 0 transparent; } 30% { box-shadow: 0 0 0 4px var(--accent); } }
+  .card.highlight { animation: pulse 1.6s ease 2; }
   .hint { font-size: 0.8rem; color: var(--text-dim); }
   .more-btn { background: none; border: none; color: var(--accent); font-size: 0.8rem; font-weight: 600; cursor: pointer; padding: 2px 0; align-self: flex-start; }
 
@@ -186,14 +261,14 @@
     position: relative;
     background: var(--card-bg-soft); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
     border: 1px solid var(--border); border-radius: var(--radius);
-    padding: 14px; margin-bottom: 10px;
+    padding: 12px 14px; margin-bottom: 10px;
     display: grid; grid-template-columns: 76px minmax(0, 1fr); column-gap: 14px;
   }
   .card.drunk-item { opacity: 0.62; }
 
   /* Etiket-placeholder: kleur van de wijn, jaargang als typografisch 'label'. Wordt later een foto. */
   .etiket {
-    grid-row: 1 / span 3; width: 76px; height: 104px; border-radius: 6px;
+    grid-row: 1 / span 2; width: 76px; height: 104px; border-radius: 6px;
     background: var(--lbl, var(--lbl-onbekend)); color: var(--ink, var(--lbl-ink-dark));
     display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
     padding: 8px 6px; text-align: center; position: relative; overflow: hidden;
@@ -209,17 +284,20 @@
   .etiket.rose { --lbl: var(--lbl-rose); --ink: var(--lbl-ink-light); }
   .etiket.mousserend { --lbl: var(--lbl-mousserend); --ink: var(--lbl-ink-light); }
   .etiket.dessert { --lbl: var(--lbl-dessert); --ink: var(--lbl-ink-dark); }
+  .etiket.photo { background: #fff; padding: 0; border: 1px solid var(--border); }
+  .etiket.photo::before { display: none; }
+  .etiket.photo img { width: 100%; height: 100%; object-fit: contain; display: block; }
 
   .card-head { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; }
   .producer-link {
-    background: none; border: none; padding: 0; margin: 1px 0 3px; display: block;
-    font-size: 0.72rem; font-weight: 700; color: var(--accent);
-    letter-spacing: 0.06em; text-transform: uppercase; cursor: pointer; text-align: left;
+    background: none; border: none; padding: 0; margin: 3px 0 0; display: block;
+    font-size: 0.86rem; font-weight: 500; color: var(--text); cursor: pointer; text-align: left;
   }
-  .producer-link:hover { text-decoration: underline; }
-  .producer-none { height: 4px; }
-  .card-title { font-weight: 700; font-size: 1.04rem; line-height: 1.3; }
-  .card-sub { font-size: 0.84rem; color: var(--text-dim); margin-top: 3px; }
+  .producer-link:hover { color: var(--accent); text-decoration: underline; }
+  .card-title { font-weight: 700; font-size: 1.04rem; line-height: 1.3; font-family: var(--serif); }
+  .card-sub { font-size: 0.82rem; color: var(--text-dim); margin-top: 3px; }
+  .card-facts { display: flex; flex-wrap: wrap; gap: 4px 18px; margin-top: 8px; font-size: 0.84rem; font-weight: 600; }
+  .card-facts .meta-empty { font-weight: 400; }
   .badge {
     font-size: 0.68rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;
     border-radius: 999px; padding: 4px 9px; white-space: nowrap; flex-shrink: 0;
@@ -231,10 +309,8 @@
   .badge.drunk { background: var(--drunk-bg); color: var(--drunk); }
   .badge .dot { width: 7px; height: 7px; background: currentColor; }
 
-  .card-meta { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 22px; margin-top: 12px; font-size: 0.84rem; }
-  .meta-item { display: inline-flex; align-items: center; gap: 8px; }
-  .meta-label { color: var(--text-dim); font-size: 0.78rem; }
   .meta-empty { color: var(--text-dim); }
+  .stepper { display: inline-flex; align-items: center; gap: 6px; margin-right: 4px; }
   .qty-btn {
     width: 30px; height: 30px; border-radius: 8px; border: 1px solid var(--border);
     background: var(--card-bg); color: var(--text); font-size: 1rem; cursor: pointer;
@@ -244,7 +320,7 @@
   .qty-btn:disabled { opacity: 0.4; cursor: default; }
   .qty-value { font-weight: 700; min-width: 18px; text-align: center; }
 
-  .actions { grid-column: 2; display: flex; align-items: center; gap: 8px; margin-top: 12px; }
+  .actions { grid-column: 2; display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
   .btn {
     font-size: 0.8rem; border: 1px solid var(--border); background: var(--card-bg); color: var(--text-dim);
     border-radius: 9px; padding: 8px 12px; cursor: pointer; min-height: 38px;
@@ -327,6 +403,43 @@
     .modal-overlay { align-items: center; }
     .modal-box { border-radius: 16px; }
   }
+  /* Detailvenster: op grotere schermen een paneel dat van rechts inschuift */
+  @media (min-width: 760px) {
+    .modal-overlay.side { align-items: stretch; justify-content: flex-end; }
+    .modal-overlay.side .modal-box {
+      max-width: 440px; max-height: none; height: 100%; border-radius: 16px 0 0 16px;
+      box-shadow: -12px 0 40px rgba(0,0,0,0.35);
+      animation: slideIn 0.22s ease-out;
+    }
+  }
+  @keyframes slideIn { from { transform: translateX(40px); opacity: 0.4; } to { transform: none; opacity: 1; } }
+  @keyframes sheetUp { from { transform: translateY(40px); opacity: 0.4; } to { transform: none; opacity: 1; } }
+  .modal-overlay.open .modal-box { animation: sheetUp 0.2s ease-out; }
+  @media (min-width: 760px) { .modal-overlay.side.open .modal-box { animation: slideIn 0.22s ease-out; } }
+  @media (prefers-reduced-motion: reduce) { .modal-overlay .modal-box { animation: none !important; } }
+
+  /* Mobiele onderbalk */
+  .bottom-nav { display: none; }
+  @media (max-width: 640px) {
+    .bottom-nav {
+      display: grid; grid-template-columns: repeat(4, 1fr);
+      position: fixed; left: 0; right: 0; bottom: 0; z-index: 40;
+      background: var(--card-bg); border-top: 1px solid var(--border);
+      padding: 4px 4px calc(4px + env(safe-area-inset-bottom, 0px));
+      box-shadow: 0 -4px 18px rgba(0,0,0,0.18);
+    }
+    .bottom-nav button {
+      display: flex; flex-direction: column; align-items: center; gap: 2px;
+      background: none; border: none; color: var(--text-dim); font-size: 0.7rem; font-weight: 600;
+      padding: 6px 0; min-height: 52px; cursor: pointer; border-radius: 10px;
+    }
+    .bottom-nav button .ico { font-size: 1.3rem; line-height: 1; }
+    .bottom-nav button[aria-current="page"] { color: var(--accent); }
+    .container { padding-bottom: calc(88px + env(safe-area-inset-bottom, 0px)); }
+    #toast { bottom: calc(76px + env(safe-area-inset-bottom, 0px)); }
+    .header-actions .ghost { display: none; }
+  }
+
   .modal-close {
     float: right; border: none; background: transparent; color: var(--text-dim);
     font-size: 1.1rem; cursor: pointer; padding: 4px 6px; line-height: 1; min-width: 32px; min-height: 32px;
@@ -360,6 +473,12 @@
   .form textarea.mono { min-height: 140px; font-family: ui-monospace, monospace; font-size: 0.78rem; }
   .form-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
   .form-row.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .photo-row { display: flex; gap: 12px; align-items: center; }
+  .photo-prev {
+    width: 56px; height: 76px; border-radius: 6px; border: 1px dashed var(--border); background: #fff;
+    display: flex; align-items: center; justify-content: center; font-size: 1.3rem; overflow: hidden; flex-shrink: 0;
+  }
+  .photo-prev img { width: 100%; height: 100%; object-fit: contain; }
   .form-hint { font-size: 0.74rem; color: var(--text-dim); margin-top: 8px; line-height: 1.4; }
 
   /* --- toast + notice --- */
@@ -372,13 +491,14 @@
     max-width: 90vw; text-align: center;
   }
   #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  /* Staat er een venster open, dan de melding bovenin tonen zodat hij geen knoppen bedekt */
+  body:has(.modal-overlay.open) #toast { bottom: auto; top: calc(16px + env(safe-area-inset-top, 0px)); }
   #noticeBox .notice { background: var(--soon-bg); color: var(--soon); border-radius: 10px; padding: 10px 12px; font-size: 0.8rem; margin-bottom: 12px; }
 
   @media (prefers-reduced-motion: reduce) { #toast { transition: none; } }
 
   @media (max-width: 640px) {
-    .duo { grid-template-columns: minmax(0, 1fr); }
-    .surprise-btn { margin: 4px 0 0; }
+    .history-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .filter-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
   }
   @media (max-width: 480px) {
@@ -386,9 +506,20 @@
     .add-btn { padding: 8px 10px; font-size: 0.8rem; }
     .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .card { grid-template-columns: 60px minmax(0, 1fr); column-gap: 12px; padding: 12px; }
-    .etiket { width: 60px; height: 84px; grid-row: 1 / span 2; }
-    .etiket .e-year { font-size: 1rem; }
-    .actions { grid-column: 1 / -1; }
+    .card > .etiket { width: 60px; height: 84px; grid-row: 1; }
+    .card > .etiket .e-year { font-size: 1rem; }
+    .actions { grid-column: 1 / -1; gap: 6px; }
+    .actions .btn { padding: 7px 9px; font-size: 0.78rem; }
+    .actions .btn.more { min-width: 36px; }
+    .stepper { gap: 4px; margin-right: 0; }
+    .qty-btn { width: 28px; height: 28px; }
+    .add-label { display: none; }
+    .add-btn { font-size: 1.2rem !important; line-height: 1; padding: 6px 12px !important; }
+    .head-counts { font-size: 0.76rem; }
+    .head-counts span + span::before { margin: 0 6px; }
+    .quick-btn { flex-direction: column; gap: 3px; font-size: 0.8rem; padding: 10px 6px; }
+    .match { grid-template-columns: 64px minmax(0, 1fr); }
+    .match .etiket { width: 64px; height: 88px; }
     .card-title { font-size: 1rem; }
     .form-row { grid-template-columns: minmax(0, 1fr); }
   }
@@ -402,15 +533,19 @@
       <h1>🍷 Mijn Wijnkelder</h1>
       <div class="subtitle" id="headerCount">Laden…</div>
     </div>
-    <button class="add-btn" id="openAddBtn" type="button">+ Wijn toevoegen</button>
+    <div class="header-actions">
+      <button class="add-btn ghost" id="historyBtn" aria-pressed="false" type="button">📊 Historie</button>
+      <button class="add-btn" id="openAddBtn" aria-label="Wijn toevoegen" type="button">+<span class="add-label"> Wijn toevoegen</span></button>
+    </div>
   </div>
 </header>
 
 <div class="container">
 
-  <div class="stats" id="stats" role="group" aria-label="Filter op status"></div>
-
   <div id="noticeBox" aria-live="polite"></div>
+
+<div id="cellarView">
+  <div class="stats" id="stats" role="group" aria-label="Filter op status"></div>
 
   <section class="panel search-panel" aria-label="Zoeken en filteren">
     <input class="search-input" id="search" type="search" placeholder="🔍 Zoek wijn, producent, druif, regio of jaargang..." aria-label="Zoeken">
@@ -448,29 +583,30 @@
     </div>
   </section>
 
-  <div class="duo">
-    <section class="panel">
-      <h2>🍽️ Wijn bij gerecht</h2>
-      <p class="lead">Wat ga je eten? Flessen die nu op dronk zijn krijgen voorrang.</p>
-      <input class="pairing-input" id="pairingInput" placeholder="Steak, zalm, pasta..." aria-label="Gerecht of ingrediënt">
-      <div class="pairing-foot">
-        <span id="exampleChips" style="display:contents"></span>
-        <button class="solid-btn" id="pairingBtn" type="button">Zoek wijn</button>
-      </div>
-      <div class="result-box" id="pairingResults"></div>
-    </section>
-    <section class="panel surprise-panel">
-      <h2>🎲 Wat drinken we vanavond?</h2>
-      <p class="lead">Een goede fles uit je kelder, met voorkeur voor "Nu drinken".</p>
-      <button class="surprise-btn" id="surpriseBtn" type="button">🎲 Verras me</button>
-      <div class="result-box" id="surpriseResult"></div>
-    </section>
+  <div class="quick" role="group" aria-label="Snelkeuze">
+    <button class="quick-btn" id="quickNow" aria-pressed="false" type="button"><span class="ico" aria-hidden="true">🍷</span>Nu drinken</button>
+    <button class="quick-btn" id="quickPair" type="button"><span class="ico" aria-hidden="true">🍽️</span>Bij gerecht</button>
+    <button class="quick-btn" id="quickSurprise" type="button"><span class="ico" aria-hidden="true">🎲</span>Verras me</button>
   </div>
 
   <div id="list"></div>
   <div class="empty" id="emptyMsg" style="display:none;">Geen flessen gevonden. Pas je zoekterm of filters aan.</div>
+</div>
+
+<div id="historyView" hidden>
+  <div class="history-summary" id="historySummary"></div>
+  <div id="historyFavs"></div>
+  <div id="historyList"></div>
+</div>
 
 </div>
+
+<nav class="bottom-nav" aria-label="Navigatie">
+  <button data-nav="cellar" aria-current="page" type="button"><span class="ico" aria-hidden="true">🍷</span>Kelder</button>
+  <button data-nav="search" type="button"><span class="ico" aria-hidden="true">🔍</span>Zoeken</button>
+  <button data-nav="choose" type="button"><span class="ico" aria-hidden="true">🎲</span>Kiezen</button>
+  <button data-nav="history" type="button"><span class="ico" aria-hidden="true">📊</span>Historie</button>
+</nav>
 
 <!-- Toevoegen -->
 <div class="modal-overlay" id="addModalOverlay">
@@ -495,14 +631,54 @@
 
 <div class="modal-overlay" id="producerModalOverlay"><div class="modal-box" id="producerModalBox" role="dialog" aria-modal="true"></div></div>
 <div class="modal-overlay" id="confirmModalOverlay"><div class="modal-box" id="confirmModalBox" role="dialog" aria-modal="true"></div></div>
-<div class="modal-overlay" id="detailModalOverlay"><div class="modal-box" id="detailModalBox" role="dialog" aria-modal="true" aria-label="Wijndetails"></div></div>
+<div class="modal-overlay side" id="detailModalOverlay"><div class="modal-box" id="detailModalBox" role="dialog" aria-modal="true" aria-label="Wijndetails"></div></div>
 <div class="modal-overlay" id="editModalOverlay"><div class="modal-box" id="editModalBox" role="dialog" aria-modal="true"></div></div>
+
+<!-- Wijn bij gerecht -->
+<div class="modal-overlay" id="pairModalOverlay">
+  <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="pairTitle">
+    <button class="modal-close" data-close="pairModalOverlay" aria-label="Sluiten" type="button">✕</button>
+    <h3 id="pairTitle">🍽️ Wijn bij gerecht</h3>
+    <p class="lead">Wat ga je eten? Flessen die nu op dronk zijn krijgen voorrang.</p>
+    <div class="pairing-foot" style="margin-top:0">
+      <input class="pairing-input" id="pairingInput" placeholder="Entrecote met pepersaus, zalm, pasta..." aria-label="Gerecht of ingrediënt" style="flex:1;width:auto">
+      <button class="solid-btn" id="pairingBtn" type="button" style="margin-left:0">Zoeken</button>
+    </div>
+    <div class="pairing-foot"><span id="exampleChips" style="display:contents"></span></div>
+    <div class="result-box" id="pairingResults"></div>
+  </div>
+</div>
+
+<!-- Verras me -->
+<div class="modal-overlay" id="surpriseModalOverlay">
+  <div class="modal-box" id="surpriseModalBox" role="dialog" aria-modal="true" aria-label="Wat drinken we vanavond?"></div>
+</div>
+
+<!-- Kiezen (mobiel) -->
+<div class="modal-overlay" id="chooseModalOverlay">
+  <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="chooseTitle">
+    <button class="modal-close" data-close="chooseModalOverlay" aria-label="Sluiten" type="button">✕</button>
+    <h3 id="chooseTitle">Wat drinken we?</h3>
+    <div class="dv-actions">
+      <button class="btn" data-choose="surprise" type="button">🎲 Verras me</button>
+      <button class="btn" data-choose="pair" type="button">🍽️ Wijn bij gerecht</button>
+      <button class="btn" data-choose="now" type="button">🍷 Toon alles wat nu op dronk is</button>
+    </div>
+  </div>
+</div>
+
+<!-- Fles opgedronken -->
+<div class="modal-overlay" id="drinkModalOverlay">
+  <div class="modal-box" id="drinkModalBox" role="dialog" aria-modal="true" aria-label="Fles opgedronken"></div>
+</div>
 
 <div id="toast" role="status" aria-live="polite"></div>
 
 <script>
 const API_URL = 'api/wines.php';
 const PRODUCERS_URL = 'api/producers.php';
+const TASTINGS_URL = 'api/tastings.php';
+const UPLOAD_URL = 'api/upload.php';
 const writable = true;
 
 const statusLabel = { now: 'Nu drinken', soon: 'Binnenkort', wait: 'Kan wachten' };
@@ -516,7 +692,8 @@ const COUNTRIES = {
 
 let wines = [];
 let producers = [];
-const state = { status: 'all', color: '', country: '', sort: 'statusYear', search: '', filtersOpen: false };
+let tastings = [];
+const state = { status: 'all', color: '', country: '', sort: 'statusYear', search: '', filtersOpen: false, view: 'cellar' };
 let pendingDeleteId = null;
 
 /* ---------- helpers ---------- */
@@ -582,17 +759,44 @@ const fmtPrice = p => (p === null || p === undefined || p === '') ? '' : Number(
 const bottles = list => list.reduce((s, w) => s + (w.qty || 1), 0);
 const plural = (n, one, many) => n + ' ' + (n === 1 ? one : many);
 
+// Vlag · regio · druif, bv. "🇫🇷 Bourgogne, Frankrijk · Chardonnay"
 function subLine(w) {
-  const parts = [w.grape, w.region].filter(Boolean).map(escapeHtml).join(' · ');
   const f = flag(countryOf(w));
-  return parts + (f ? (parts ? ' ' : '') + f : '');
+  const parts = [w.region, w.grape].filter(Boolean).map(escapeHtml).join(' · ');
+  return (f ? f + ' ' : '') + parts;
 }
+// Kelderlocatie altijd als "Rek B-04"
+function locText(w) {
+  const l = (w.location || '').trim();
+  if (!l) return '';
+  return /^rek\b/i.test(l) ? l : 'Rek ' + l;
+}
+// Etiket: foto als die er is, anders het gekleurde label met jaargang
+function etiketHtml(w) {
+  const color = colorOf(w);
+  if (w.image) {
+    return `<div class="etiket photo" aria-hidden="true"><img src="${escapeHtml(w.image)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.parentNode.outerHTML=etiketFallback('${color}',${w.year || 0})"></div>`;
+  }
+  return etiketFallback(color, w.year);
+}
+function etiketFallback(color, year) {
+  return `<div class="etiket ${color}" aria-hidden="true">
+      <span class="e-year">${year || 'NV'}</span><span class="e-rule"></span><span class="e-kind">${COLORS[color] || 'Wijn'}</span>
+    </div>`;
+}
+const starsText = r => r ? '★'.repeat(r) + '☆'.repeat(5 - r) : '';
 
 /* ---------- data ---------- */
 async function loadWines() {
   const res = await fetch(API_URL);
   if (!res.ok) throw new Error('load failed');
   wines = await res.json();
+}
+async function loadTastings() {
+  try {
+    const res = await fetch(TASTINGS_URL);
+    tastings = res.ok ? await res.json() : [];
+  } catch (err) { tastings = []; }
 }
 async function loadProducers() {
   try {
@@ -620,9 +824,10 @@ function renderStats() {
       <span class="n"><span class="dot ${d.key}" aria-hidden="true"></span>${d.n}</span>
       <span class="l">${d.label}</span>
     </button>`).join('');
-  const drunkCount = bottles(wines.filter(w => w.drunk));
-  document.getElementById('headerCount').textContent =
-    plural(bottles(active), 'fles', 'flessen') + ' beschikbaar' + (drunkCount ? ' · ' + drunkCount + ' opgedronken' : '');
+  document.getElementById('headerCount').innerHTML = `<span class="head-counts">
+    <span>${plural(bottles(active), 'fles', 'flessen')}</span><span>${by('now')} nu drinken</span><span>${by('soon')} binnenkort</span></span>`;
+  const qn = document.getElementById('quickNow');
+  qn.setAttribute('aria-pressed', String(state.status === 'now'));
 }
 document.getElementById('stats').addEventListener('click', e => {
   const b = e.target.closest('[data-status]');
@@ -767,16 +972,57 @@ function badgeHtml(w) {
   return `<span class="badge ${cls}"><span class="dot" aria-hidden="true"></span>${txt}</span>`;
 }
 function miniCard(w, why) {
-  const loc = w.location ? ` · 📍 ${escapeHtml(w.location)}` : '';
-  return `<div class="mini-card">
-    <div class="mini-top">
-      <div>
-        <div class="mini-title">${escapeHtml(w.name)}${w.year ? ' ' + w.year : ''}</div>
-        <div class="mini-sub">${subLine(w)}${loc}</div>
+  const loc = locText(w) ? ` · 📍 ${escapeHtml(locText(w))}` : '';
+  return `<button class="mini-card" data-open="${w.id}" type="button">
+    ${etiketHtml(w)}
+    <div>
+      <div class="mini-top">
+        <div>
+          <div class="mini-title">${escapeHtml(w.name)}${w.year ? ' ' + w.year : ''}</div>
+          <div class="mini-sub">${escapeHtml(w.producer || '')}${loc}</div>
+        </div>
+        ${badgeHtml(w)}
       </div>
-      ${badgeHtml(w)}
+      ${why ? `<div class="mini-why">${escapeHtml(why)}</div>` : ''}
     </div>
-    <div class="mini-why">${escapeHtml(why)}</div>
+  </button>`;
+}
+const TAG_LABELS = {
+  roodvlees: 'rood vlees', bbq: 'gegrild', wild: 'wild', vis: 'vis', schaaldieren: 'schaaldieren', gevogelte: 'gevogelte',
+  pasta: 'pasta', kaas: 'kaas', aziatisch: 'aziatisch', kruidig: 'kruidig', aperitief: 'borrel', romig: 'romige sauzen'
+};
+// Korte opsomming waarom een wijn past: stijl + gedeelde gerechtcategorieën
+function matchReasons(w, tags) {
+  const color = colorOf(w);
+  const g = (w.grape || '').toLowerCase();
+  const out = [];
+  if (color === 'rood') out.push(/cabernet|syrah|shiraz|nebbiolo|sagrantino|garnacha|bordeaux|merlot/.test(g) ? 'krachtige rode wijn' : 'soepele rode wijn');
+  if (color === 'wit') out.push(/chardonnay|viognier/.test(g) ? 'volle witte wijn' : 'frisse witte wijn');
+  if (color === 'mousserend') out.push('bubbels');
+  if (color === 'rose') out.push('rosé');
+  inferTags(w).filter(t => tags.includes(t)).forEach(t => out.push(TAG_LABELS[t] || t));
+  if (w.status === 'now') out.push('nu op dronk');
+  return [...new Set(out)];
+}
+function featureActions(w) {
+  return `<div class="confirm-actions">
+      <button class="btn" data-open="${w.id}" type="button">Details</button>
+      <button class="btn save-fill" data-pick="${w.id}" type="button">🍷 Deze wordt het</button>
+    </div>`;
+}
+function matchCard(w, reasons) {
+  const loc = locText(w);
+  return `<div class="match">
+    ${etiketHtml(w)}
+    <div>
+      <div class="feature-name">${escapeHtml(w.name)}${w.year ? ' ' + w.year : ''}</div>
+      ${w.producer ? `<div class="feature-producer">${escapeHtml(w.producer)}</div>` : ''}
+      <div class="feature-sub">${subLine(w)}</div>
+      ${badgeHtml(w)}
+      <div class="feature-sub" style="margin-top:8px;font-weight:600;color:var(--text)">🍾 ${plural(w.qty || 1, 'fles', 'flessen')}${loc ? ' · 📍 ' + escapeHtml(loc) : ''}</div>
+      ${reasons.length ? `<div class="feature-why"><strong>Past goed vanwege</strong>${reasons.map(escapeHtml).join(' · ')}</div>` : ''}
+      ${featureActions(w)}
+    </div>
   </div>`;
 }
 function renderPairingResults(query) {
@@ -784,33 +1030,166 @@ function renderPairingResults(query) {
   if (!query.trim()) { box.innerHTML = ''; return; }
   const { tags, results, rest, fallback } = findPairings(query);
   if (!results.length) { box.innerHTML = '<div class="hint">Je kelder is nog leeg. Voeg eerst een fles toe.</div>'; return; }
-  const intro = fallback ? `<div class="hint">Geen exacte match voor "${escapeHtml(query)}". Veelzijdige aanbevelingen:</div>` : '';
-  const more = rest.length ? `<button class="more-btn" id="showMoreBtn" type="button">Toon ${plural(rest.length, 'andere passende wijn', 'andere passende wijnen')}</button>` : '';
-  box.innerHTML = intro + results.map(r => miniCard(r.wine, pairingReason(r.wine, tags, fallback))).join('') + more;
-  if (rest.length) document.getElementById('showMoreBtn').addEventListener('click', e => {
+  const [best, ...others] = [...results, ...rest];
+  const intro = fallback ? `<div class="hint">Geen exacte match voor "${escapeHtml(query)}". Deze veelzijdige flessen passen bij de meeste gerechten:</div>` : '';
+  const second = others.slice(0, 2);
+  const more = others.slice(2);
+  box.innerHTML = intro +
+    `<div class="section-kicker center">🍷 Beste match uit jouw kelder</div>` +
+    matchCard(best.wine, fallback ? (best.wine.status === 'now' ? ['nu op dronk', 'veelzijdig'] : ['veelzijdig']) : matchReasons(best.wine, tags)) +
+    (second.length ? `<div class="section-kicker">Tweede keuze</div>` + second.map(r => miniCard(r.wine, pairingReason(r.wine, tags, fallback))).join('') : '') +
+    (more.length ? `<button class="more-btn" id="showMoreBtn" type="button">Toon ${plural(more.length, 'andere passende wijn', 'andere passende wijnen')}</button>` : '');
+  if (more.length) document.getElementById('showMoreBtn').addEventListener('click', e => {
     e.target.remove();
-    box.insertAdjacentHTML('beforeend', rest.map(r => miniCard(r.wine, pairingReason(r.wine, tags, fallback))).join(''));
+    box.insertAdjacentHTML('beforeend', more.map(r => miniCard(r.wine, pairingReason(r.wine, tags, fallback))).join(''));
   });
+}
+function openPairModal() {
+  document.getElementById('pairModalOverlay').classList.add('open');
+  setTimeout(() => document.getElementById('pairingInput').focus(), 50);
 }
 document.getElementById('pairingBtn').addEventListener('click', () => renderPairingResults(document.getElementById('pairingInput').value));
 document.getElementById('pairingInput').addEventListener('keydown', e => { if (e.key === 'Enter') renderPairingResults(e.target.value); });
-document.getElementById('exampleChips').innerHTML = ['Steak', 'Zalm', 'Pasta', 'Kaas'].map(x => `<button class="chip" type="button">${x}</button>`).join('');
+document.getElementById('exampleChips').innerHTML = ['Steak', 'Zalm', 'Pasta', 'Kaas', 'Kip', 'Aziatisch'].map(x => `<button class="chip" type="button">${x}</button>`).join('');
 document.getElementById('exampleChips').addEventListener('click', e => {
   const c = e.target.closest('.chip');
   if (!c) return;
   document.getElementById('pairingInput').value = c.textContent;
   renderPairingResults(c.textContent);
 });
-document.getElementById('surpriseBtn').addEventListener('click', () => {
-  const box = document.getElementById('surpriseResult');
+
+/* ---------- verras me ---------- */
+const surprise = { kind: '', lastId: null };
+const SURPRISE_KINDS = { '': 'Alles', rood: 'Rood', wit: 'Wit', bubbels: 'Bubbels' };
+function surprisePool() {
   const active = wines.filter(w => !w.drunk);
-  if (!active.length) { box.innerHTML = '<div class="hint">Geen flessen beschikbaar om uit te kiezen.</div>'; return; }
-  const nowWines = active.filter(w => w.status === 'now');
-  const pool = nowWines.length ? nowWines : active;
-  const pick = pool[Math.floor(Math.random() * pool.length)];
-  box.innerHTML = miniCard(pick, pick.status === 'now' ? 'Willekeurig gekozen, en nu op dronk.' : 'Willekeurig gekozen.');
-  document.getElementById('surpriseBtn').textContent = '🎲 Nog een keer';
+  const byKind = active.filter(w => {
+    const c = colorOf(w);
+    if (surprise.kind === 'bubbels') return c === 'mousserend';
+    if (surprise.kind) return c === surprise.kind;
+    return true;
+  });
+  const now = byKind.filter(w => w.status === 'now');
+  const pool = now.length ? now : byKind;
+  return pool.length > 1 ? pool.filter(w => String(w.id) !== String(surprise.lastId)) : pool;
+}
+function renderSurprise() {
+  const box = document.getElementById('surpriseModalBox');
+  const pool = surprisePool();
+  const chips = Object.entries(SURPRISE_KINDS).map(([k, l]) =>
+    `<button class="chip${surprise.kind === k ? ' active' : ''}" data-kind="${k}" aria-pressed="${surprise.kind === k}" type="button">${l}</button>`).join('');
+  let body;
+  if (!pool.length) {
+    body = `<p class="lead" style="text-align:center;margin-top:18px">Geen flessen gevonden in deze categorie.</p>`;
+  } else {
+    const w = pool[Math.floor(Math.random() * pool.length)];
+    surprise.lastId = w.id;
+    const loc = locText(w);
+    const why = w.status === 'now'
+      ? 'Deze fles staat in je categorie Nu drinken: hij is op zijn best.'
+      : (w.status === 'soon' ? 'Er is niets op dronk in deze categorie; deze fles moet binnenkort open.' : 'Willekeurig gekozen uit je kelder.');
+    body = `<div class="feature">
+        ${etiketHtml(w)}
+        <div class="feature-name">${escapeHtml(w.name)}</div>
+        ${w.year ? `<div class="feature-year">${w.year}</div>` : ''}
+        ${w.producer ? `<div class="feature-producer">${escapeHtml(w.producer)}</div>` : ''}
+        <div class="feature-sub">${subLine(w)}</div>
+        ${badgeHtml(w)}
+        <div class="feature-why"><strong>Waarom deze?</strong>${why}</div>
+        <div class="feature-facts"><span>🍾 ${plural(w.qty || 1, 'fles', 'flessen')}</span><span>${loc ? '📍 ' + escapeHtml(loc) : ''}</span></div>
+      </div>
+      <div class="confirm-actions">
+        <button class="btn" data-again type="button">🎲 Andere wijn</button>
+        <button class="btn save-fill" data-pick="${w.id}" type="button">🍷 Deze wordt het</button>
+      </div>`;
+  }
+  box.innerHTML = `<button class="modal-close" data-close="surpriseModalOverlay" aria-label="Sluiten" type="button">✕</button>
+    <h3 style="text-align:center">🎲 Vanavond drinken</h3>
+    <div class="pick-row" role="group" aria-label="Soort wijn">${chips}</div>${body}`;
+}
+function openSurprise() {
+  surprise.lastId = null;
+  renderSurprise();
+  document.getElementById('surpriseModalOverlay').classList.add('open');
+}
+document.getElementById('surpriseModalBox').addEventListener('click', e => {
+  const k = e.target.closest('[data-kind]');
+  if (k) { surprise.kind = k.dataset.kind; surprise.lastId = null; return renderSurprise(); }
+  if (e.target.closest('[data-again]')) return renderSurprise();
 });
+
+// "Deze wordt het": venster sluiten en de kaart in de lijst laten oplichten. De voorraad
+// verandert pas als je daadwerkelijk op Opgedronken klikt.
+function pickWine(id) {
+  const w = wines.find(x => String(x.id) === String(id));
+  document.querySelectorAll('.modal-overlay.open').forEach(o => o.classList.remove('open'));
+  if (!w) return;
+  if (state.view !== 'cellar') setView('cellar');
+  if (!filteredWines().some(x => String(x.id) === String(id))) {
+    Object.assign(state, { status: 'all', color: '', country: '', search: '' });
+    document.getElementById('search').value = '';
+    render();
+  }
+  const card = document.querySelector(`.card[data-id="${w.id}"]`);
+  if (card) {
+    card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    card.classList.remove('highlight'); void card.offsetWidth; card.classList.add('highlight');
+  }
+  showToast(`Goede keuze! ${w.name}${locText(w) ? ' ligt in ' + locText(w) : ''}. Proost!`);
+}
+// Klikken op wijnen in de vensters (details / kiezen)
+document.addEventListener('click', e => {
+  const pick = e.target.closest('[data-pick]');
+  if (pick) return pickWine(pick.dataset.pick);
+  const open = e.target.closest('[data-open]');
+  if (open) {
+    document.querySelectorAll('#pairModalOverlay.open, #surpriseModalOverlay.open').forEach(o => o.classList.remove('open'));
+    return openDetailModal(open.dataset.open);
+  }
+});
+
+/* ---------- snelknoppen + navigatie ---------- */
+document.getElementById('quickNow').addEventListener('click', () => {
+  state.status = state.status === 'now' ? 'all' : 'now';
+  render();
+  if (state.status === 'now') document.getElementById('list').scrollIntoView({ behavior: 'smooth', block: 'start' });
+});
+document.getElementById('quickPair').addEventListener('click', openPairModal);
+document.getElementById('quickSurprise').addEventListener('click', openSurprise);
+document.getElementById('historyBtn').addEventListener('click', () => setView(state.view === 'history' ? 'cellar' : 'history'));
+document.querySelector('.bottom-nav').addEventListener('click', e => {
+  const b = e.target.closest('[data-nav]');
+  if (!b) return;
+  const nav = b.dataset.nav;
+  if (nav === 'cellar') { setView('cellar'); window.scrollTo({ top: 0, behavior: 'smooth' }); }
+  if (nav === 'search') {
+    setView('cellar');
+    const input = document.getElementById('search');
+    input.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    input.focus({ preventScroll: true });
+  }
+  if (nav === 'choose') document.getElementById('chooseModalOverlay').classList.add('open');
+  if (nav === 'history') setView('history');
+});
+document.getElementById('chooseModalOverlay').addEventListener('click', e => {
+  const b = e.target.closest('[data-choose]');
+  if (!b) return;
+  document.getElementById('chooseModalOverlay').classList.remove('open');
+  if (b.dataset.choose === 'surprise') openSurprise();
+  if (b.dataset.choose === 'pair') openPairModal();
+  if (b.dataset.choose === 'now') { setView('cellar'); state.status = 'now'; render(); document.getElementById('list').scrollIntoView({ behavior: 'smooth' }); }
+});
+function setView(view) {
+  state.view = view;
+  document.getElementById('cellarView').hidden = view !== 'cellar';
+  document.getElementById('historyView').hidden = view !== 'history';
+  document.getElementById('historyBtn').setAttribute('aria-pressed', String(view === 'history'));
+  document.querySelectorAll('.bottom-nav [data-nav]').forEach(b => {
+    const on = b.dataset.nav === view || (view === 'cellar' && b.dataset.nav === 'cellar');
+    if (on) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current');
+  });
+  if (view === 'history') { renderHistory(); window.scrollTo({ top: 0 }); }
+}
 
 /* ---------- list ---------- */
 function filteredWines() {
@@ -875,13 +1254,12 @@ function openDetailModal(id) {
   const lines = Array.isArray(w.serving) ? w.serving : (w.serving ? String(w.serving).split('\n') : []);
   const serving = lines.map(l => String(l).trim()).filter(Boolean).map(l => `<li>${escapeHtml(l)}</li>`).join('');
   const val = (v) => v ? `<dd>${v}</dd>` : '<dd class="empty-val">—</dd>';
+  const history = tastings.filter(t => String(t.wineId) === String(w.id));
 
   document.getElementById('detailModalBox').innerHTML = `
     <button class="modal-close" data-close="detailModalOverlay" aria-label="Sluiten" type="button">✕</button>
     <div class="dv">
-      <div class="etiket ${color}" aria-hidden="true">
-        <span class="e-year">${w.year || 'NV'}</span><span class="e-rule"></span><span class="e-kind">${COLORS[color] || 'Wijn'}</span>
-      </div>
+      ${etiketHtml(w)}
       <h3 class="dv-name">${escapeHtml(w.name)}</h3>
       ${w.year ? `<div class="dv-year">${w.year}</div>` : ''}
       ${w.producer ? `<button class="dv-producer" data-dv="producer" type="button">${escapeHtml(w.producer)}</button>` : ''}
@@ -894,7 +1272,7 @@ function openDetailModal(id) {
         ${timelineHtml(w)}
         <dl class="kv">
           <dt>Voorraad</dt><dd>${w.drunk ? 'Opgedronken' : plural(qty, 'fles', 'flessen')}</dd>
-          <dt>Locatie</dt>${val(w.location ? escapeHtml(w.location) : '')}
+          <dt>Locatie</dt>${val(locText(w) ? escapeHtml(locText(w)) : '')}
           <dt>Aankoopdatum</dt>${val(fmtDate(w.purchaseDate))}
           <dt>Aankoopprijs</dt>${val(fmtPrice(w.purchasePrice))}
         </dl>
@@ -903,6 +1281,9 @@ function openDetailModal(id) {
       <div class="dv-section">
         <h4>Mijn notities</h4>
         ${w.notes ? `<p class="notes">${escapeHtml(w.notes)}</p>` : '<p class="notes empty-val">Nog geen notities. Voeg ze toe via Bewerken.</p>'}
+        ${history.length ? `<h4 style="margin-top:16px">Eerder gedronken</h4>${history.map(t => `
+          <div class="modal-wine-item"><strong>${fmtDate(t.date)}</strong>${t.rating ? ` · <span style="color:#d4a017">${starsText(t.rating)}</span>` : ''}${t.rebuy ? ' · opnieuw kopen' : ''}
+          ${t.note ? `<div style="color:var(--text-dim);margin-top:2px;white-space:pre-line">${escapeHtml(t.note)}</div>` : ''}</div>`).join('')}` : ''}
         ${(character || serving) ? `<details>
           <summary>Karakter &amp; serveren</summary>
           ${character ? `<h5>Karakter</h5>${character}` : ''}
@@ -929,14 +1310,8 @@ function openDetailModal(id) {
     try {
       b.disabled = true;
       if (act === 'drink') {
-        // Eén fles minder; bij de laatste fles gaat de wijn naar Opgedronken.
-        if (qty > 1) {
-          await patchWine(w.id, { qty: qty - 1 });
-          showToast(`Proost! Nog ${plural(qty - 1, 'fles', 'flessen')} ${w.name} over.`);
-        } else {
-          await patchWine(w.id, { drunk: true });
-          showToast(`Proost! '${w.name}' staat nu bij Opgedronken.`);
-        }
+        document.getElementById('detailModalOverlay').classList.remove('open');
+        return openDrinkModal(w.id);
       }
       if (act === 'undrunk') {
         await patchWine(w.id, { drunk: false });
@@ -954,39 +1329,28 @@ function openDetailModal(id) {
 
 function cardHtml(w) {
   const qty = w.qty || 1;
-  const color = colorOf(w);
   const locked = !writable || w.drunk;
+  const loc = locText(w);
   return `
-    <div class="etiket ${color}" aria-hidden="true">
-      <span class="e-year">${w.year || 'NV'}</span>
-      <span class="e-rule"></span>
-      <span class="e-kind">${COLORS[color] || 'Wijn'}</span>
-    </div>
+    ${etiketHtml(w)}
     <div>
       <div class="card-head">
-        <div>
-          ${w.producer
-            ? `<button class="producer-link" data-action="showProducer" data-producer="${escapeHtml(w.producer)}" type="button">${escapeHtml(w.producer)}</button>`
-            : '<div class="producer-none"></div>'}
-          <div class="card-title">${escapeHtml(w.name)}${w.year ? ' ' + w.year : ''}</div>
-          <div class="card-sub">${subLine(w)}</div>
-        </div>
+        <div class="card-title">${escapeHtml(w.name)}${w.year ? ' ' + w.year : ''}</div>
         ${badgeHtml(w)}
       </div>
-      <div class="card-meta">
-        <span class="meta-item">
-          <span class="meta-label">🍾 Voorraad</span>
-          <button class="qty-btn" data-action="qty-down" data-id="${w.id}" aria-label="Aantal verminderen" ${(!locked && qty > 1) ? '' : 'disabled'} type="button">−</button>
-          <span class="qty-value" aria-label="${plural(qty, 'fles', 'flessen')}">${qty}</span>
-          <button class="qty-btn" data-action="qty-up" data-id="${w.id}" aria-label="Aantal verhogen" ${locked ? 'disabled' : ''} type="button">+</button>
-        </span>
-        <span class="meta-item">
-          <span class="meta-label">📍 Locatie</span>
-          ${w.location ? `<strong>${escapeHtml(w.location)}</strong>` : '<span class="meta-empty">—</span>'}
-        </span>
+      ${w.producer ? `<button class="producer-link" data-action="showProducer" data-producer="${escapeHtml(w.producer)}" type="button">${escapeHtml(w.producer)}</button>` : ''}
+      <div class="card-sub">${subLine(w)}</div>
+      <div class="card-facts">
+        <span>🍾 ${w.drunk ? 'Opgedronken' : plural(qty, 'fles', 'flessen')}</span>
+        <span>📍 ${loc ? escapeHtml(loc) : '<span class="meta-empty">geen locatie</span>'}</span>
       </div>
     </div>
     <div class="actions">
+      ${w.drunk ? '' : `<span class="stepper" role="group" aria-label="Voorraad">
+        <button class="qty-btn" data-action="qty-down" data-id="${w.id}" aria-label="Aantal verminderen" ${(!locked && qty > 1) ? '' : 'disabled'} type="button">−</button>
+        <span class="qty-value" aria-label="${plural(qty, 'fles', 'flessen')}">${qty}</span>
+        <button class="qty-btn" data-action="qty-up" data-id="${w.id}" aria-label="Aantal verhogen" ${locked ? 'disabled' : ''} type="button">+</button>
+      </span>`}
       ${w.drunk
         ? `<button class="btn" data-action="undrunk" data-id="${w.id}" ${writable ? '' : 'disabled'} type="button">↩ Terugzetten</button>`
         : `<button class="btn primary" data-action="drunk" data-id="${w.id}" ${writable ? '' : 'disabled'} type="button">✓ Opgedronken</button>`}
@@ -1022,6 +1386,7 @@ function renderList() {
     }
     const card = document.createElement('article');
     card.className = 'card' + (w.drunk ? ' drunk-item' : '');
+    card.dataset.id = w.id;
     card.innerHTML = cardHtml(w);
     frag.appendChild(card);
   });
@@ -1032,6 +1397,7 @@ function render() {
   renderStats();
   renderChips();
   renderList();
+  if (state.view === 'history') renderHistory();
 }
 
 function closeMenus(except) {
@@ -1071,8 +1437,7 @@ document.getElementById('list').addEventListener('click', async e => {
 
   try {
     if (action === 'drunk') {
-      await patchWine(id, { drunk: true });
-      showToast(`'${wine ? wine.name : 'Fles'}' gemarkeerd als opgedronken.`);
+      return openDrinkModal(id);
     } else if (action === 'undrunk') {
       await patchWine(id, { drunk: false });
       showToast(`'${wine ? wine.name : 'Fles'}' teruggezet naar voorraad.`);
@@ -1126,6 +1491,14 @@ function wineFields(prefix, w = {}) {
       <div><label for="${prefix}_pdate">Aankoopdatum</label><input id="${prefix}_pdate" type="date" value="${escapeHtml(w.purchaseDate || '')}"></div>
       <div><label for="${prefix}_pprice">Aankoopprijs (€)</label><input id="${prefix}_pprice" type="number" inputmode="decimal" min="0" step="0.01" value="${w.purchasePrice ?? ''}" placeholder="45,00"></div>
     </div>
+    <label for="${prefix}_photo">Etiketfoto</label>
+    <div class="photo-row">
+      <div class="photo-prev" id="${prefix}_prev">${w.image ? `<img src="${escapeHtml(w.image)}" alt="">` : '📷'}</div>
+      <div style="flex:1;min-width:0">
+        <input id="${prefix}_photo" type="file" accept="image/*" capture="environment">
+        <input id="${prefix}_image" value="${escapeHtml(w.image || '')}" placeholder="of plak een link: https://..." style="margin-top:6px">
+      </div>
+    </div>
     <label for="${prefix}_notes">Mijn notities</label>
     <textarea id="${prefix}_notes" rows="3" placeholder="Gedronken met..., cadeau van..., indruk">${escapeHtml(w.notes || '')}</textarea>
     <label for="${prefix}_character">Karakter</label>
@@ -1142,9 +1515,37 @@ function readFields(prefix) {
     windowFrom: parseInt(v('wfrom')) || null, windowTo: parseInt(v('wto')) || null,
     purchaseDate: v('pdate') || null, purchasePrice: v('pprice') === '' ? null : parseFloat(v('pprice').replace(',', '.')),
     notes: document.getElementById(prefix + '_notes').value.trim(),
+    image: v('image'),
     serving: document.getElementById(prefix + '_serving').value.split('\n').map(l => l.trim()).filter(Boolean)
   };
 }
+
+async function uploadPhoto(prefix, id) {
+  const input = document.getElementById(prefix + '_photo');
+  if (!input || !input.files || !input.files[0]) return;
+  const fd = new FormData();
+  fd.append('id', id);
+  fd.append('photo', input.files[0]);
+  const res = await fetch(UPLOAD_URL, { method: 'POST', body: fd });
+  if (!res.ok) {
+    let msg = 'Foto kon niet worden geüpload.';
+    try { const j = await res.json(); if (j.error) msg = 'Foto: ' + j.error; } catch (e) {}
+    showNotice(msg);
+  }
+}
+// Voorbeeld tonen zodra je een foto kiest of een link plakt
+document.addEventListener('change', e => {
+  const m = /^(f|e)_photo$/.exec(e.target.id || '');
+  if (!m || !e.target.files[0]) return;
+  const url = URL.createObjectURL(e.target.files[0]);
+  document.getElementById(m[1] + '_prev').innerHTML = `<img src="${url}" alt="">`;
+});
+document.addEventListener('input', e => {
+  const m = /^(f|e)_image$/.exec(e.target.id || '');
+  if (!m) return;
+  const v = e.target.value.trim();
+  document.getElementById(m[1] + '_prev').innerHTML = /^https:\/\//.test(v) ? `<img src="${escapeHtml(v)}" alt="">` : '📷';
+});
 
 function openAddModal() {
   document.getElementById('panel-single').innerHTML = wineFields('f') + `
@@ -1178,6 +1579,8 @@ async function saveNewWine() {
   try {
     const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify(data) });
     if (!res.ok) throw new Error('save failed');
+    const { id } = await res.json();
+    await uploadPhoto('f', id);
     document.getElementById('addModalOverlay').classList.remove('open');
     await loadWines();
     render();
@@ -1210,7 +1613,7 @@ document.getElementById('bulkSaveBtn').addEventListener('click', async () => {
           year: w.year || null, status: w.status || 'wait', window: w.window || '', location: w.location || '',
           character: w.character || '', serving: w.serving || [], qty: w.qty || 1,
           windowFrom: w.windowFrom || null, windowTo: w.windowTo || null,
-          purchaseDate: w.purchaseDate || null, purchasePrice: w.purchasePrice ?? null, notes: w.notes || ''
+          purchaseDate: w.purchaseDate || null, purchasePrice: w.purchasePrice ?? null, notes: w.notes || '', image: w.image || ''
         
         })
       });
@@ -1223,6 +1626,134 @@ document.getElementById('bulkSaveBtn').addEventListener('click', async () => {
   await loadWines();
   render();
   showToast(plural(count, 'fles', 'flessen') + ' toegevoegd aan de kelder.' + (failed ? ' ' + failed + ' mislukt.' : ''));
+});
+
+/* ---------- fles opgedronken: waardering + drinkhistorie ---------- */
+function openDrinkModal(id) {
+  const w = wines.find(x => String(x.id) === String(id));
+  if (!w) return;
+  const qty = w.qty || 1;
+  let rating = 0;
+  const box = document.getElementById('drinkModalBox');
+  box.innerHTML = `
+    <button class="modal-close" data-close="drinkModalOverlay" aria-label="Sluiten" type="button">✕</button>
+    <h3>🍷 Fles opgedronken</h3>
+    <div class="feature-name" style="font-size:1.05rem;text-transform:none;letter-spacing:0">${escapeHtml(w.name)}${w.year ? ' ' + w.year : ''}</div>
+    ${w.producer ? `<div class="feature-sub">${escapeHtml(w.producer)}</div>` : ''}
+    <p class="lead" style="margin:16px 0 0;text-align:center">Hoe vond je hem?</p>
+    <div class="stars" role="radiogroup" aria-label="Waardering">
+      ${[1, 2, 3, 4, 5].map(n => `<button class="star" data-star="${n}" role="radio" aria-checked="false" aria-label="${n} ${n === 1 ? 'ster' : 'sterren'}" type="button">★</button>`).join('')}
+    </div>
+    <div class="form">
+      <label for="d_note">Korte notitie</label>
+      <textarea id="d_note" rows="3" placeholder="Mooie mineraliteit, nog prachtige zuren..."></textarea>
+      <div class="form-row two">
+        <div><label for="d_date">Datum</label><input id="d_date" type="date" value="${new Date().toISOString().slice(0, 10)}"></div>
+        <div></div>
+      </div>
+    </div>
+    <label class="check-row"><input type="checkbox" id="d_rebuy"> Deze wijn opnieuw kopen</label>
+    <div class="form-hint">${qty > 1 ? `Voorraad gaat van ${qty} naar ${qty - 1}.` : 'Dit is de laatste fles; de wijn blijft bewaard onder Opgedronken.'} Het drinkmoment komt in je Historie.</div>
+    <div class="confirm-actions">
+      <button class="btn" data-close="drinkModalOverlay" type="button">Annuleren</button>
+      <button class="btn save-fill" id="drinkSaveBtn" type="button">🍷 Opslaan</button>
+    </div>`;
+  const paint = () => box.querySelectorAll('.star').forEach(st => {
+    const on = Number(st.dataset.star) <= rating;
+    st.classList.toggle('on', on);
+    st.setAttribute('aria-checked', String(Number(st.dataset.star) === rating));
+  });
+  box.querySelector('.stars').addEventListener('click', e => {
+    const st = e.target.closest('[data-star]');
+    if (!st) return;
+    const n = Number(st.dataset.star);
+    rating = rating === n ? 0 : n;
+    paint();
+  });
+  document.getElementById('drinkSaveBtn').addEventListener('click', async e => {
+    e.target.disabled = true;
+    try {
+      const res = await fetch(TASTINGS_URL, {
+        method: 'POST',
+        body: JSON.stringify({
+          wineId: w.id, rating: rating || null, note: document.getElementById('d_note').value.trim(),
+          rebuy: document.getElementById('d_rebuy').checked, date: document.getElementById('d_date').value
+        })
+      });
+      if (!res.ok) throw new Error('save failed');
+      document.getElementById('drinkModalOverlay').classList.remove('open');
+      await Promise.all([loadWines(), loadTastings()]);
+      render();
+      showToast(qty > 1 ? `Proost! Nog ${plural(qty - 1, 'fles', 'flessen')} ${w.name} over.` : `Proost! '${w.name}' staat nu in je Historie.`);
+    } catch (err) {
+      e.target.disabled = false;
+      showNotice('Drinkmoment kon niet worden opgeslagen. Probeer opnieuw.');
+    }
+  });
+  document.getElementById('drinkModalOverlay').classList.add('open');
+}
+
+function renderHistory() {
+  const list = tastings;
+  const rated = list.filter(t => t.rating);
+  const avg = rated.length ? (rated.reduce((s, t) => s + t.rating, 0) / rated.length) : null;
+  const year = String(CURRENT_YEAR);
+  const thisYear = list.filter(t => (t.date || '').startsWith(year)).length;
+  const rebuy = list.filter(t => t.rebuy);
+  document.getElementById('historySummary').innerHTML = [
+    ['🍷', list.length, 'Gedronken'],
+    ['📅', thisYear, 'Dit jaar'],
+    ['★', avg ? avg.toLocaleString('nl-NL', { maximumFractionDigits: 1 }) : '—', 'Gem. score'],
+    ['🛒', rebuy.length, 'Opnieuw kopen']
+  ].map(([i, n, l]) => `<div class="stat"><span class="n"><span aria-hidden="true" style="font-size:0.95rem">${i}</span>${n}</span><span class="l">${l}</span></div>`).join('');
+
+  // Favorieten: meest gedronken regio's en producenten, beste wijnen
+  const top = (key) => {
+    const c = {};
+    list.forEach(t => { const v = (t[key] || '').split(',')[0].trim(); if (v) c[v] = (c[v] || 0) + 1; });
+    return Object.entries(c).sort((a, b) => b[1] - a[1]).slice(0, 5);
+  };
+  const best = [...rated].sort((a, b) => b.rating - a.rating || (b.date || '').localeCompare(a.date || '')).slice(0, 3);
+  const regions = top('region'), prods = top('producer');
+  document.getElementById('historyFavs').innerHTML = list.length ? `
+    <section class="panel fav-panel">
+      ${best.length ? `<h2>🏆 Beste wijnen</h2><div class="fav-list" style="margin-bottom:12px">${best.map(t => `<span class="chip">${escapeHtml(t.name)}${t.year ? ' ' + t.year : ''} · <span style="color:#d4a017">${'★'.repeat(t.rating)}</span></span>`).join('')}</div>` : ''}
+      ${regions.length ? `<h2>📍 Favoriete regio's</h2><div class="fav-list" style="margin-bottom:12px">${regions.map(([r, n]) => `<span class="chip">${escapeHtml(r)} · ${n}</span>`).join('')}</div>` : ''}
+      ${prods.length ? `<h2>🏠 Favoriete producenten</h2><div class="fav-list" style="margin-bottom:${rebuy.length ? 12 : 0}px">${prods.map(([r, n]) => `<span class="chip">${escapeHtml(r)} · ${n}</span>`).join('')}</div>` : ''}
+      ${rebuy.length ? `<h2>🛒 Opnieuw kopen</h2><div class="fav-list">${[...new Map(rebuy.map(t => [t.name + t.producer, t])).values()].map(t => `<span class="chip">${escapeHtml(t.producer ? t.producer + ' · ' : '')}${escapeHtml(t.name)}</span>`).join('')}</div>` : ''}
+    </section>` : '';
+
+  document.getElementById('historyList').innerHTML = list.length
+    ? `<div class="group-head"><h3>Drinkhistorie</h3><span>${plural(list.length, 'fles', 'flessen')}</span></div>` + list.map(t => `
+      <article class="card t-card">
+        <div>
+          <div class="card-title">${escapeHtml(t.name)}${t.year ? ' ' + t.year : ''}</div>
+          ${t.producer ? `<div class="producer-link" style="cursor:default">${escapeHtml(t.producer)}</div>` : ''}
+          <div class="card-sub">${subLine({ region: t.region, grape: t.grape, country: t.country })}</div>
+        </div>
+        <div style="text-align:right">
+          ${t.rating ? `<div class="t-stars" aria-label="${t.rating} van 5 sterren">${starsText(t.rating)}</div>` : ''}
+          <div class="t-date">${fmtDate(t.date)}</div>
+        </div>
+        ${t.note ? `<div class="t-note">${escapeHtml(t.note)}</div>` : ''}
+        ${t.rebuy ? `<div class="t-rebuy">🛒 Opnieuw kopen</div>` : ''}
+        <button class="t-del" data-del-tasting="${t.id}" style="grid-column:1/-1" type="button">Verwijder uit historie</button>
+      </article>`).join('')
+    : `<div class="empty">Nog geen drinkmomenten. Klik bij een fles op <strong>✓ Opgedronken</strong> om hem met een score en notitie in je historie te zetten.</div>`;
+}
+document.getElementById('historyList').addEventListener('click', async e => {
+  const b = e.target.closest('[data-del-tasting]');
+  if (!b) return;
+  if (!b.dataset.armed) { b.dataset.armed = '1'; b.textContent = 'Zeker weten? Klik nogmaals om te verwijderen'; return; }
+  try {
+    const res = await fetch(TASTINGS_URL + '?id=' + encodeURIComponent(b.dataset.delTasting), { method: 'DELETE' });
+    if (!res.ok) throw new Error('delete failed');
+    await loadTastings();
+    renderHistory();
+    showToast('Drinkmoment verwijderd uit historie.');
+  } catch (err) {
+    showNotice('Drinkmoment kon niet worden verwijderd.');
+  }
 });
 
 function openEditModal(id) {
@@ -1243,6 +1774,7 @@ function openEditModal(id) {
     if (!updated.name) { document.getElementById('e_name').focus(); return; }
     try {
       await patchWine(id, updated);
+      await uploadPhoto('e', id);
       document.getElementById('editModalOverlay').classList.remove('open');
       await loadWines();
       render();
@@ -1316,7 +1848,7 @@ function showNotice(msg) {
 
 async function init() {
   try {
-    await Promise.all([loadWines(), loadProducers()]);
+    await Promise.all([loadWines(), loadProducers(), loadTastings()]);
     render();
   } catch (err) {
     document.getElementById('headerCount').textContent = 'Kan wijnvoorraad niet laden';

@@ -1,0 +1,4 @@
+# Geen scripts uitvoeren in de uploadmap
+<FilesMatch "\.(php|phtml|phar|pl|py|cgi|sh)$">
+  Require all denied
+</FilesMatch>

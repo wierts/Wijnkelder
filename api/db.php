@@ -52,6 +52,11 @@ $extraColumns = [
     "ALTER TABLE wines ADD COLUMN purchase_date DATE NULL",
     "ALTER TABLE wines ADD COLUMN purchase_price DECIMAL(8,2) NULL",
     "ALTER TABLE wines ADD COLUMN notes TEXT NULL",
+    // Etiketfoto: relatief pad (img/etiketten/...) of https-URL
+    "ALTER TABLE wines ADD COLUMN image VARCHAR(500) DEFAULT ''",
+    // Marktprijs: indicatie van de huidige winkelprijs per fles (NL/EU) + bron/datum
+    "ALTER TABLE wines ADD COLUMN market_price DECIMAL(8,2) NULL",
+    "ALTER TABLE wines ADD COLUMN market_note VARCHAR(160) DEFAULT ''",
 ];
 foreach ($extraColumns as $sql) {
     try {
@@ -67,4 +72,24 @@ $pdo->exec("CREATE TABLE IF NOT EXISTS producers (
     region VARCHAR(255) DEFAULT '',
     description TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+// Drinkhistorie: één regel per opgedronken fles. De wijngegevens worden als
+// momentopname bewaard, zodat de historie blijft kloppen als een wijn later wordt verwijderd.
+$pdo->exec("CREATE TABLE IF NOT EXISTS tastings (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    wine_id INT NULL,
+    drunk_on DATE NOT NULL,
+    rating TINYINT NULL,
+    note TEXT,
+    rebuy TINYINT(1) DEFAULT 0,
+    wine_name VARCHAR(255) DEFAULT '',
+    wine_producer VARCHAR(255) DEFAULT '',
+    wine_year INT NULL,
+    wine_region VARCHAR(255) DEFAULT '',
+    wine_grape VARCHAR(255) DEFAULT '',
+    wine_color VARCHAR(20) DEFAULT '',
+    wine_country VARCHAR(2) DEFAULT '',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    INDEX (wine_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
