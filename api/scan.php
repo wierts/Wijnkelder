@@ -50,7 +50,7 @@ Je bent een ervaren sommelier. Op de foto staat een wijnetiket (of een fles). Le
 - year: de jaargang als getal, 0 als die niet zichtbaar is.
 - grape: druif of blend (bv. "Chardonnay", "Sangiovese", "Cabernet/Merlot").
 - region: regio en land in het Nederlands, bv. "Bourgogne, Frankrijk" of "Mosel, Duitsland".
-- country: ISO-landcode met 2 letters, bv. FR, IT, DE, ES.
+- country: ISO-landcode met 2 letters van het land in region, bv. FR, IT, DE, ES, GR (Griekenland), CY (Cyprus). Let op: Cyprus is CY, niet GR.
 - color: één van rood, wit, rose, mousserend, dessert.
 - windowFrom / windowTo: het drinkvenster in jaartallen (schat op basis van wijn en jaargang).
 - status: "now" als de wijn in {$year} op dronk is, "soon" als hij binnen ongeveer 2 jaar op zijn best is of zijn venster bijna voorbij is, anders "wait".

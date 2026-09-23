@@ -801,7 +801,18 @@ function deriveColor(text) {
   return '';
 }
 const colorOf = w => w.color || deriveColor([w.grape, w.name, w.region].join(' '));
-const countryOf = w => (w.country || deriveCountry(w.region) || deriveCountry([w.name, w.grape].join(' '))).toUpperCase();
+// Staat het land met naam in de regio ("Lemesos, Cyprus"), dan wint dat van een (mogelijk foute) opgeslagen code.
+const COUNTRY_ALIASES = { CY: ['cyprus', 'cypern', 'chypre', 'zypern'], GR: ['greece', 'grece'], FR: ['france'], IT: ['italy', 'italia'], ES: ['spain', 'espana'],
+  DE: ['germany', 'deutschland'], AT: ['austria', 'osterreich'], HU: ['hungary'], US: ['usa'], ZA: ['south africa'], NZ: ['new zealand'], NL: ['netherlands'] };
+function explicitCountry(region) {
+  const r = (region || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  for (const [code, name] of Object.entries(COUNTRIES)) {
+    const names = [name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ''), ...(COUNTRY_ALIASES[code] || [])];
+    if (names.some(n => new RegExp('(^|[^a-z])' + n + '($|[^a-z])').test(r))) return code;
+  }
+  return '';
+}
+const countryOf = w => (explicitCountry(w.region) || w.country || deriveCountry(w.region) || deriveCountry([w.name, w.grape].join(' '))).toUpperCase();
 const CURRENT_YEAR = new Date().getFullYear();
 // Drinkvenster als jaartallen. Zijn de velden nog leeg, dan halen we de jaren uit de oude tekst ("2019-2026", "tot 2030", "vanaf 2028").
 function parseWindowText(text) {
@@ -1737,7 +1748,7 @@ function setField(id, v) {
 }
 function fillFromScan(sw) {
   setField('f_producer', sw.producer); setField('f_name', sw.name); setField('f_grape', sw.grape);
-  setField('f_region', sw.region); setField('f_country', (sw.country || '').toUpperCase()); setField('f_color', sw.color);
+  setField('f_region', sw.region); setField('f_country', explicitCountry(sw.region) || (sw.country || '').toUpperCase()); setField('f_color', sw.color);
   setField('f_year', sw.year); setField('f_status', sw.status); setField('f_wfrom', sw.windowFrom); setField('f_wto', sw.windowTo);
   setField('f_window', sw.window); setField('f_character', sw.character);
   if (SIZES[sw.size]) setField('f_size', String(sw.size));
@@ -1842,11 +1853,15 @@ document.getElementById('addModalOverlay').addEventListener('change', e => {
   if (e.target.id === 'f_color' || e.target.id === 'f_country') e.target.dataset.touched = '1';
 });
 
-async function saveNewWine() {
+async function saveNewWine(e) {
   const data = readFields('f');
   if (!data.name) { document.getElementById('f_name').focus(); return; }
   data.qty = parseInt(document.getElementById('f_qty').value) || 1;
   data.drunk = false;
+  // Bestaat deze wijn al (zelfde producent + naam)? Eerst waarschuwen, tenzij je al "Toch apart opslaan" koos.
+  const force = e && e.currentTarget && e.currentTarget.dataset.force === '1';
+  const found = !force && findExisting(data);
+  if (found) { showDupWarning(found, data); return; }
   try {
     const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify(data) });
     if (!res.ok) throw new Error('save failed');
@@ -1859,6 +1874,37 @@ async function saveNewWine() {
   } catch (err) {
     showNotice('Fles kon niet worden toegevoegd. Probeer opnieuw.');
   }
+}
+
+function showDupWarning(found, data) {
+  const sameYear = !data.year || !found.year || String(found.year) === String(data.year);
+  const sameSize = sizeOf(found) === (data.size || 750);
+  const canAdd = sameYear && sameSize;
+  let box = document.getElementById('dupWarn');
+  if (!box) {
+    box = document.createElement('div'); box.id = 'dupWarn'; box.className = 'scan-dup';
+    document.getElementById('saveBtn').closest('.confirm-actions').before(box);
+  }
+  box.innerHTML = `<div><strong>Let op: deze wijn staat al in je kelder:</strong> ${escapeHtml([found.producer, found.name].filter(Boolean).join(' · '))}${found.year ? ' ' + found.year : ''} · ${found.drunk ? 'opgedronken' : plural(found.qty || 1, 'fles', 'flessen')}${sameYear ? '' : ` <span class="hint">(andere jaargang: ${data.year})</span>`}${sameSize ? '' : ' <span class="hint">(ander formaat)</span>'}</div>
+    <div class="confirm-actions" style="margin-top:10px">
+      ${canAdd ? `<button class="btn save-fill" id="dupAddBtn" type="button">+${plural(data.qty, 'fles', 'flessen')} bij bestaande</button>` : ''}
+      <button class="btn" id="dupForceBtn" data-force="1" type="button">Toch apart opslaan</button>
+    </div>`;
+  box.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  document.getElementById('dupForceBtn').addEventListener('click', saveNewWine);
+  const add = document.getElementById('dupAddBtn');
+  if (add) add.addEventListener('click', async () => {
+    try {
+      await patchWine(found.id, found.drunk ? { drunk: false, qty: data.qty } : { qty: (found.qty || 1) + data.qty });
+      if (!found.image && scanState.blob) {
+        const fd = new FormData(); fd.append('id', found.id); fd.append('photo', scanState.blob, 'etiket.jpg');
+        await fetch(UPLOAD_URL, { method: 'POST', body: fd });
+      }
+      document.getElementById('addModalOverlay').classList.remove('open');
+      await loadWines(); render();
+      showToast(`${plural(data.qty, 'fles', 'flessen')} bijgeteld bij '${found.name}'.`);
+    } catch (err) { showNotice('Kon de flessen niet bijtellen. Probeer opnieuw.'); }
+  });
 }
 
 document.getElementById('bulkSaveBtn').addEventListener('click', async () => {
