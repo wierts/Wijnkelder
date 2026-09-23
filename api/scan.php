@@ -4,6 +4,8 @@
 // Vereist in api/config.php:  define('GEMINI_API_KEY', '...');
 // Optioneel:                  define('GEMINI_MODEL', 'gemini-3.8-flash');
 header('Content-Type: application/json');
+require __DIR__ . '/auth.php';
+require_auth();
 
 $configFile = __DIR__ . '/config.php';
 if (file_exists($configFile)) require $configFile;

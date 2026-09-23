@@ -1,5 +1,7 @@
 <?php
 header('Content-Type: application/json');
+require __DIR__ . '/auth.php';
+require_auth();
 
 $configFile = __DIR__ . '/config.php';
 if (!file_exists($configFile)) {

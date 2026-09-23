@@ -355,6 +355,15 @@
   .menu button:hover { background: var(--accent-tint); color: var(--accent); }
   .menu button.danger:hover { background: var(--drunk-bg); color: #b23a2e; }
 
+  /* --- inlogscherm --- */
+  .login-screen { position: fixed; inset: 0; z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 16px; background: rgba(20, 16, 13, 0.72); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+  .login-box { width: 100%; max-width: 360px; background: var(--card-bg); color: var(--text); border-radius: 18px; padding: 26px 22px 22px; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.35); display: flex; flex-direction: column; gap: 10px; }
+  .login-box h2 { margin: 0; font-family: var(--serif); }
+  .login-box p { margin: 0 0 6px; font-size: 0.88rem; color: var(--text-dim); }
+  .login-box input { width: 100%; box-sizing: border-box; padding: 12px 14px; border: 1px solid var(--border); border-radius: 10px; font-size: 1rem; background: var(--card-bg); color: var(--text); }
+  .login-box .login-btn { width: 100%; justify-content: center; padding: 12px; margin-top: 4px; background: var(--accent); border-color: var(--accent); color: var(--card-bg); font-weight: 600; }
+  .login-ico { font-size: 2rem; }
+  .login-err { min-height: 1.1em; font-size: 0.84rem; color: var(--soon); }
   /* --- detailvenster --- */
   .dv { text-align: center; }
   .dv .etiket { width: 104px; height: 142px; margin: 4px auto 14px; grid-row: auto; }
@@ -2120,11 +2129,64 @@ function showNotice(msg) {
   document.getElementById('noticeBox').innerHTML = `<div class="notice">${escapeHtml(msg)}</div>`;
 }
 
+/* ---------- inloggen (één keer per apparaat) ---------- */
+const LOGIN_URL = 'api/login.php';
+let loginOpen = false;
+// Elk API-antwoord 401 → inlogscherm tonen
+const _fetch = window.fetch.bind(window);
+window.fetch = async (...args) => {
+  const res = await _fetch(...args);
+  if (res.status === 401 && String(args[0]).startsWith('api/')) {
+    const j = await res.clone().json().catch(() => ({}));
+    showLogin(!!j.setup);
+  }
+  return res;
+};
+function showLogin(setup) {
+  if (loginOpen) return;
+  loginOpen = true;
+  const el = document.createElement('div');
+  el.className = 'login-screen';
+  el.innerHTML = `<form class="login-box" autocomplete="on">
+      <div class="login-ico" aria-hidden="true">🍷</div>
+      <h2>Mijn Wijnkelder</h2>
+      <p>${setup ? 'Kies een wachtwoord voor je wijnkelder. Daarmee log je op elk apparaat één keer in.' : 'Log één keer in op dit apparaat. Daarna blijf je ingelogd.'}</p>
+      <input type="text" name="username" value="wijnkelder" autocomplete="username" hidden>
+      <input id="loginPw" type="password" autocomplete="${setup ? 'new-password' : 'current-password'}" placeholder="Wachtwoord" required minlength="${setup ? 6 : 1}">
+      ${setup ? '<input id="loginPw2" type="password" autocomplete="new-password" placeholder="Herhaal wachtwoord" required>' : ''}
+      <div class="login-err" id="loginErr" role="alert"></div>
+      <button class="btn login-btn" type="submit">${setup ? 'Wachtwoord instellen' : 'Inloggen'}</button>
+    </form>`;
+  document.body.appendChild(el);
+  const pw = el.querySelector('#loginPw');
+  setTimeout(() => pw.focus(), 50);
+  el.querySelector('form').addEventListener('submit', async e => {
+    e.preventDefault();
+    const err = el.querySelector('#loginErr');
+    const pw2 = el.querySelector('#loginPw2');
+    if (pw2 && pw2.value !== pw.value) { err.textContent = 'De wachtwoorden zijn niet gelijk.'; return; }
+    err.textContent = '';
+    const btn = el.querySelector('button'); btn.disabled = true;
+    try {
+      const res = await _fetch(LOGIN_URL, { method: 'POST', body: JSON.stringify({ password: pw.value }) });
+      const j = await res.json().catch(() => ({}));
+      if (!res.ok) { err.textContent = j.error || 'Inloggen mislukt.'; btn.disabled = false; pw.select(); return; }
+      el.remove(); loginOpen = false;
+      document.getElementById('noticeBox').innerHTML = '';
+      init();
+    } catch (x) { err.textContent = 'Geen verbinding. Probeer opnieuw.'; btn.disabled = false; }
+  });
+}
+
 async function init() {
   try {
+    const st = await _fetch(LOGIN_URL).then(r => r.ok ? r.json() : null).catch(() => null);
+    if (st && !st.auth) { document.getElementById('headerCount').textContent = ''; return showLogin(st.setup); }
+
     await Promise.all([loadWines(), loadProducers(), loadTastings()]);
     render();
   } catch (err) {
+    if (loginOpen) return;
     document.getElementById('headerCount').textContent = 'Kan wijnvoorraad niet laden';
     showNotice('Kan niet verbinden met de database. Controleer of api/config.php goed staat ingesteld.');
   }
