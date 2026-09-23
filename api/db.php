@@ -37,16 +37,22 @@ $pdo->exec("CREATE TABLE IF NOT EXISTS wines (
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 
-try {
-    $pdo->exec("ALTER TABLE wines ADD COLUMN qty INT DEFAULT 1");
-} catch (PDOException $e) {
-    // kolom bestaat al, niets doen
-}
-
-try {
-    $pdo->exec("ALTER TABLE wines ADD COLUMN producer VARCHAR(255) DEFAULT ''");
-} catch (PDOException $e) {
-    // kolom bestaat al, niets doen
+// Kolommen die later zijn toegevoegd. Bestaat een kolom al, dan gooit MySQL een
+// fout die we bewust negeren; zo blijft dit script veilig om bij elke request te draaien.
+$extraColumns = [
+    "ALTER TABLE wines ADD COLUMN qty INT DEFAULT 1",
+    "ALTER TABLE wines ADD COLUMN producer VARCHAR(255) DEFAULT ''",
+    // Nieuw: kleur (rood / wit / rose / mousserend / dessert), landcode (ISO, bv. FR) en kelderlocatie (bv. B-04)
+    "ALTER TABLE wines ADD COLUMN color VARCHAR(20) DEFAULT ''",
+    "ALTER TABLE wines ADD COLUMN country VARCHAR(2) DEFAULT ''",
+    "ALTER TABLE wines ADD COLUMN location VARCHAR(50) DEFAULT ''",
+];
+foreach ($extraColumns as $sql) {
+    try {
+        $pdo->exec($sql);
+    } catch (PDOException $e) {
+        // kolom bestaat al, niets doen
+    }
 }
 
 $pdo->exec("CREATE TABLE IF NOT EXISTS producers (

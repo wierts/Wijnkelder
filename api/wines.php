@@ -1,6 +1,22 @@
 <?php
 require __DIR__ . '/db.php';
 
+const ALLOWED_COLORS = ['', 'rood', 'wit', 'rose', 'mousserend', 'dessert'];
+
+function clean_color($v) {
+    $v = strtolower(trim((string) $v));
+    return in_array($v, ALLOWED_COLORS, true) ? $v : '';
+}
+
+function clean_country($v) {
+    $v = strtoupper(preg_replace('/[^A-Za-z]/', '', (string) $v));
+    return strlen($v) === 2 ? $v : '';
+}
+
+function clean_location($v) {
+    return mb_substr(trim((string) $v), 0, 50);
+}
+
 $method = $_SERVER['REQUEST_METHOD'];
 
 switch ($method) {
@@ -21,9 +37,9 @@ switch ($method) {
                 'drunk' => (bool) $r['drunk'],
                 'qty' => isset($r['qty']) ? (int) $r['qty'] : 1,
                 'producer' => $r['producer'] ?? '',
-                // Optional kelderlocatie (bv. "B-04"). Alleen aanwezig als de tabel een
-                // 'location' kolom heeft; anders blijft dit gewoon null en verandert er niets.
-                'location' => $r['location'] ?? null,
+                'color' => $r['color'] ?? '',
+                'country' => $r['country'] ?? '',
+                'location' => $r['location'] ?? '',
             ];
         }, $rows);
         echo json_encode($wines);
@@ -36,7 +52,7 @@ switch ($method) {
             echo json_encode(['error' => 'name is verplicht']);
             exit;
         }
-        $stmt = $pdo->prepare('INSERT INTO wines (name, grape, region, year, status, window_note, character_note, serving_json, drunk, qty, producer) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?)');
+        $stmt = $pdo->prepare('INSERT INTO wines (name, grape, region, year, status, window_note, character_note, serving_json, drunk, qty, producer, color, country, location) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?, ?)');
         $stmt->execute([
             $data['name'],
             $data['grape'] ?? '',
@@ -48,6 +64,9 @@ switch ($method) {
             json_encode($data['serving'] ?? []),
             $data['qty'] ?? 1,
             $data['producer'] ?? '',
+            clean_color($data['color'] ?? ''),
+            clean_country($data['country'] ?? ''),
+            clean_location($data['location'] ?? ''),
         ]);
         echo json_encode(['id' => (string) $pdo->lastInsertId()]);
         break;
@@ -79,6 +98,18 @@ switch ($method) {
                 $sets[] = "$col = ?";
                 $vals[] = $data[$key];
             }
+        }
+        if (array_key_exists('color', $data)) {
+            $sets[] = 'color = ?';
+            $vals[] = clean_color($data['color']);
+        }
+        if (array_key_exists('country', $data)) {
+            $sets[] = 'country = ?';
+            $vals[] = clean_country($data['country']);
+        }
+        if (array_key_exists('location', $data)) {
+            $sets[] = 'location = ?';
+            $vals[] = clean_location($data['location']);
         }
         if (array_key_exists('serving', $data)) {
             $sets[] = 'serving_json = ?';
