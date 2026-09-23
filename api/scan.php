@@ -56,6 +56,7 @@ Je bent een ervaren sommelier. Op de foto staat een wijnetiket (of een fles). Le
 - character: 2 à 3 zinnen in het Nederlands over stijl en smaak.
 - serving: 2 à 3 korte Nederlandse tips (temperatuur, karafferen, gerechten).
 - priceEstimate: geschatte winkelprijs per fles in euro in Nederland, 0 als je het niet weet.
+- size: flesinhoud in ml: 750 voor een gewone fles, 1500 voor een magnum, 375 voor een halve fles, 3000 voor een dubbele magnum. Kijk naar de inhoud op het etiket (bv. "1,5 L", "150 cl", "Magnum"); 750 als je het niet ziet.
 - confidence: "high", "medium" of "low" voor hoe zeker je bent van de herkenning.
 - labelText: de belangrijkste tekst die je letterlijk op het etiket leest.
 Verzin geen producent of naam die niet op het etiket staat; laat een veld leeg als je het niet kunt lezen.
@@ -78,6 +79,7 @@ $schema = [
         'character' => ['type' => 'STRING'],
         'serving' => ['type' => 'ARRAY', 'items' => ['type' => 'STRING']],
         'priceEstimate' => ['type' => 'NUMBER'],
+        'size' => ['type' => 'INTEGER'],
         'confidence' => ['type' => 'STRING', 'enum' => ['high', 'medium', 'low']],
         'labelText' => ['type' => 'STRING'],
     ],

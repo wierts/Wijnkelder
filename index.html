@@ -308,6 +308,7 @@
   .card-sub { font-size: 0.82rem; color: var(--text-dim); margin-top: 3px; }
   .card-facts { display: flex; flex-wrap: wrap; gap: 4px 18px; margin-top: 8px; font-size: 0.84rem; font-weight: 600; }
   .card-facts .meta-empty { font-weight: 400; }
+  .size-tag { display: inline-block; padding: 0 7px; border-radius: 8px; background: var(--accent); color: var(--card-bg); font-size: 0.74rem; font-weight: 700; letter-spacing: 0.02em; }
   .badge {
     font-size: 0.68rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;
     border-radius: 999px; padding: 4px 9px; white-space: nowrap; flex-shrink: 0;
@@ -395,12 +396,18 @@
   .dw-now.start { transform: translateX(-6px); text-align: left; } .dw-now.end { transform: translateX(calc(-100% + 6px)); text-align: right; }
   .dw-sum { font-size: 0.82rem; font-weight: 600; color: var(--c); margin-top: 2px; }
   /* Compacte variant op de kaart */
-  .dw-mini { --c: var(--now); display: flex; align-items: center; gap: 8px; margin-top: 8px; font-size: 0.74rem; color: var(--text-dim); font-variant-numeric: tabular-nums; }
+  .dw-mini { --c: var(--now); position: relative; max-width: 300px; margin-top: 12px; font-size: 0.72rem; color: var(--text-dim); font-variant-numeric: tabular-nums; }
   .dw-mini.soon { --c: var(--soon); } .dw-mini.wait { --c: var(--wait); } .dw-mini.past { --c: var(--drunk); }
-  .dw-mini .dw-axis { flex: 1; max-width: 220px; height: 8px; }
+  .dw-mini .dw-axis { height: 8px; margin: 0 1px; }
   .dw-mini .dw-line { top: 3px; }
   .dw-mini .dw-band { height: 8px; border-radius: 4px; }
-  .dw-mini .dw-pin { position: absolute; top: -3px; width: 2px; height: 14px; margin-left: -1px; background: var(--text); border-radius: 1px; }
+  .dw-mini .dw-pin { position: absolute; top: -4px; width: 2px; height: 16px; margin-left: -1px; background: var(--text); border-radius: 1px; }
+  .dw-labels { position: relative; height: 15px; margin: 4px 1px 0; }
+  .dw-labels span { position: absolute; transform: translateX(-50%); white-space: nowrap; }
+  .dw-labels .win { color: var(--c); font-weight: 700; }
+  .dw-nowlbl { position: relative; display: inline-block; height: 15px; margin-bottom: 5px; transform: translateX(-50%); white-space: nowrap; color: var(--text); font-weight: 700; }
+  .dw-nowlbl.start { transform: none; } .dw-nowlbl.end { transform: translateX(-100%); }
+  .dw-labels .start { transform: none; } .dw-labels .end { transform: translateX(-100%); }
   .kv { display: grid; grid-template-columns: auto 1fr; gap: 7px 16px; margin-top: 14px; font-size: 0.88rem; }
   .kv dt { color: var(--text-dim); }
   .kv dd { margin: 0; text-align: right; font-weight: 600; font-variant-numeric: tabular-nums; }
@@ -812,6 +819,10 @@ function subLine(w) {
   const parts = [w.region, w.grape].filter(Boolean).map(escapeHtml).join(' · ');
   return (f ? f + ' ' : '') + parts;
 }
+// Flesformaat (ml) → label; standaardfles (750) krijgt geen label
+const SIZES = { 375: 'Halve fles (37,5 cl)', 500: '50 cl', 750: 'Fles (75 cl)', 1500: 'Magnum (1,5 L)', 3000: 'Dubbele magnum (3 L)', 6000: 'Imperiale (6 L)' };
+const sizeOf = w => Number(w.size) || 750;
+const sizeShort = w => ({ 375: 'Halve fles', 500: '50 cl', 1500: 'Magnum', 3000: 'Dubbele magnum', 6000: 'Imperiale' })[sizeOf(w)] || '';
 // Kelderlocatie altijd als "Rek B-04"
 function locText(w) {
   const l = (w.location || '').trim();
@@ -1317,15 +1328,26 @@ function timelineHtml(w) {
     ${w.window && !/^\s*[\d\s\-–tovanaf]+\s*$/i.test(w.window) ? `<div class="tl-note">${escapeHtml(w.window)}</div>` : ''}`;
 }
 
-// Smalle tijdlijn onderaan een kaart: band = drinkvenster, streepje = nu
+// Smalle tijdlijn onderaan een kaart: as loopt van nu (of 'vanaf') tot het eind van het venster,
+// met het nu-streepje en de jaartallen eronder
 function miniTimelineHtml(w) {
   if (w.drunk) return '';
   const d = windowData(w);
   if (!d) return '';
-  const { from, to, now, pct, cls } = d;
+  const { from, to, now, cls } = d;
+  const min = Math.min(now, from), max = Math.max(now, to);
+  const span = Math.max(1, max - min);
+  const pct = y => ((y - min) / span) * 100;
+  const edge = p => p <= 3 ? ' start' : p >= 97 ? ' end' : '';
+  // Venster-jaren onder de as (bij een kort venster samengevoegd), 'nu' erboven zodat ze elkaar nooit raken
+  const labels = pct(to) - pct(from) >= 20
+    ? [{ p: pct(from), text: from, extra: ' win' }, { p: pct(to), text: to, extra: ' win' }]
+    : [{ p: (pct(from) + pct(to)) / 2, text: from === to ? from : from + '–' + to, extra: ' win' }];
+  const np = pct(now);
   return `<div class="dw-mini ${cls}" title="Drinkvenster ${from}–${to}, nu ${now}">
+      <div class="dw-nowlbl${edge(np)}" style="left:${np}%">nu ${now}</div>
       <div class="dw-axis"><div class="dw-line"></div><div class="dw-band" style="left:${pct(from)}%;width:${pct(to) - pct(from)}%"></div><span class="dw-pin" style="left:${pct(now)}%"></span></div>
-      <span>${from}–${to}</span>
+      <div class="dw-labels">${labels.map(l => `<span class="${l.extra}${edge(l.p)}" style="left:${l.p}%">${l.text}</span>`).join('')}</div>
     </div>`;
 }
 
@@ -1358,6 +1380,7 @@ function openDetailModal(id) {
         ${timelineHtml(w)}
         <dl class="kv">
           <dt>Voorraad</dt><dd>${w.drunk ? 'Opgedronken' : plural(qty, 'fles', 'flessen')}</dd>
+          <dt>Formaat</dt><dd>${SIZES[sizeOf(w)] || sizeOf(w) + ' ml'}</dd>
           <dt>Locatie</dt>${val(locText(w) ? escapeHtml(locText(w)) : '')}
           <dt>Aankoopdatum</dt>${val(fmtDate(w.purchaseDate))}
           <dt>Aankoopprijs</dt>${val(fmtPrice(w.purchasePrice))}
@@ -1430,7 +1453,7 @@ function cardHtml(w) {
       ${w.producer ? `<button class="producer-link" data-action="showProducer" data-producer="${escapeHtml(w.producer)}" type="button">${escapeHtml(w.producer)}</button>` : ''}
       <div class="card-sub">${subLine(w)}</div>
       <div class="card-facts">
-        <span>🍾 ${w.drunk ? 'Opgedronken' : plural(qty, 'fles', 'flessen')}</span>
+        <span>🍾 ${w.drunk ? 'Opgedronken' : plural(qty, 'fles', 'flessen')}${sizeShort(w) ? ` · <span class="size-tag">${sizeShort(w)}</span>` : ''}</span>
         <span>📍 ${loc ? escapeHtml(loc) : '<span class="meta-empty">geen locatie</span>'}</span>
         ${hasPrice(w) ? `<span title="Marktprijs per fles${w.marketNote ? ': ' + escapeHtml(w.marketNote) : ''}">💶 ≈ ${fmtEuro0(w.marketPrice)}</span>` : ''}
       </div>
@@ -1573,6 +1596,11 @@ function wineFields(prefix, w = {}) {
       <div><label for="${prefix}_location">Locatie</label><input id="${prefix}_location" value="${escapeHtml(w.location || '')}" placeholder="B-04"></div>
       ${prefix === 'f' ? `<div><label for="f_qty">Aantal flessen</label><input id="f_qty" type="number" min="1" value="1"></div>` : '<div></div>'}
     </div>
+    <div class="form-row two">
+      <div><label for="${prefix}_size">Formaat</label>
+        <select id="${prefix}_size">${[375, 500, 750, 1500, 3000, 6000].map(n => opt(String(n), SIZES[n], String(sizeOf(w)))).join('')}</select></div>
+      <div></div>
+    </div>
     <div class="form-row">
       <div><label for="${prefix}_wfrom">Drinken vanaf</label><input id="${prefix}_wfrom" type="number" inputmode="numeric" value="${win.from || ''}" placeholder="2019"></div>
       <div><label for="${prefix}_wto">Drinken tot</label><input id="${prefix}_wto" type="number" inputmode="numeric" value="${win.to || ''}" placeholder="2026"></div>
@@ -1613,6 +1641,7 @@ function readFields(prefix) {
     image: v('image'),
     marketPrice: v('mprice') === '' ? null : parseFloat(v('mprice').replace(',', '.')),
     marketNote: v('mnote'),
+    size: parseInt(v('size')) || 750,
     serving: document.getElementById(prefix + '_serving').value.split('\n').map(l => l.trim()).filter(Boolean)
   };
 }
@@ -1675,10 +1704,14 @@ function overlap(a, b) {
 }
 // Zoek of de gescande wijn al in de kelder staat
 function findExisting(sw) {
+  // Zelfde wijn (producent + naam); daarbinnen gaat dezelfde jaargang én hetzelfde formaat voor
   let best = null;
+  const size = SIZES[sw.size] ? Number(sw.size) : 750;
   wines.forEach(w => {
     const score = overlap(w.producer, sw.producer) * 0.45 + overlap(w.name, sw.name) * 0.55;
-    if (score > 0.55 && (!best || score > best.score)) best = { wine: w, score };
+    if (score <= 0.55) return;
+    const rank = score + (sw.year && String(w.year) === String(sw.year) ? 1 : 0) + (sizeOf(w) === size ? 0.5 : 0) + (w.drunk ? 0 : 0.1);
+    if (!best || rank > best.rank) best = { wine: w, rank };
   });
   return best && best.wine;
 }
@@ -1693,6 +1726,7 @@ function fillFromScan(sw) {
   setField('f_region', sw.region); setField('f_country', (sw.country || '').toUpperCase()); setField('f_color', sw.color);
   setField('f_year', sw.year); setField('f_status', sw.status); setField('f_wfrom', sw.windowFrom); setField('f_wto', sw.windowTo);
   setField('f_window', sw.window); setField('f_character', sw.character);
+  if (SIZES[sw.size]) setField('f_size', String(sw.size));
   if (Array.isArray(sw.serving)) setField('f_serving', sw.serving.join('\n'));
   if (sw.priceEstimate > 0) {
     setField('f_mprice', Math.round(sw.priceEstimate * 100) / 100);
@@ -1727,11 +1761,14 @@ async function runScan(file) {
     let html = `<div class="scan-ok">✓ Herkend: <strong>${escapeHtml([sw.producer, sw.name, sw.year || ''].filter(Boolean).join(' · '))}</strong>${conf ? ` <span class="hint">(${conf})</span>` : ''}<div class="hint">Controleer de velden hieronder en tik op Opslaan. De foto wordt je etiketfoto.</div></div>`;
     if (found) {
       const sameYear = !sw.year || String(found.year) === String(sw.year);
+      const scanSize = SIZES[sw.size] ? Number(sw.size) : 750;
+      const sameSize = sizeOf(found) === scanSize;
+      const canAdd = sameYear && sameSize;
       html += `<div class="scan-dup">
-        <div><strong>Deze wijn staat al in je kelder:</strong> ${escapeHtml(found.name)}${found.year ? ' ' + found.year : ''} · ${found.drunk ? 'opgedronken' : plural(found.qty || 1, 'fles', 'flessen')}${locText(found) ? ' · 📍 ' + escapeHtml(locText(found)) : ''}${sameYear ? '' : ` <span class="hint">(andere jaargang: gescand ${sw.year})</span>`}</div>
+        <div><strong>Deze wijn staat al in je kelder:</strong> ${escapeHtml(found.name)}${found.year ? ' ' + found.year : ''} · ${found.drunk ? 'opgedronken' : plural(found.qty || 1, 'fles', 'flessen')}${locText(found) ? ' · 📍 ' + escapeHtml(locText(found)) : ''}${sizeShort(found) ? ' · ' + sizeShort(found) : ''}${sameYear ? '' : ` <span class="hint">(andere jaargang: gescand ${sw.year})</span>`}${sameSize ? '' : ` <span class="hint">(ander formaat: gescand ${escapeHtml(SIZES[scanSize])})</span>`}</div>
         <div class="confirm-actions" style="margin-top:10px">
           <button class="btn" data-scan-open="${found.id}" type="button">Details</button>
-          ${sameYear ? `<button class="btn save-fill" data-scan-plus="${found.id}" type="button">+1 fles bij bestaande</button>` : ''}
+          ${canAdd ? `<button class="btn save-fill" data-scan-plus="${found.id}" type="button">+1 fles bij bestaande</button>` : ''}
         </div>
       </div>`;
     }
@@ -1833,7 +1870,7 @@ document.getElementById('bulkSaveBtn').addEventListener('click', async () => {
           year: w.year || null, status: w.status || 'wait', window: w.window || '', location: w.location || '',
           character: w.character || '', serving: w.serving || [], qty: w.qty || 1,
           windowFrom: w.windowFrom || null, windowTo: w.windowTo || null,
-          purchaseDate: w.purchaseDate || null, purchasePrice: w.purchasePrice ?? null, notes: w.notes || '', image: w.image || '', marketPrice: w.marketPrice ?? null, marketNote: w.marketNote || ''
+          purchaseDate: w.purchaseDate || null, purchasePrice: w.purchasePrice ?? null, notes: w.notes || '', image: w.image || '', marketPrice: w.marketPrice ?? null, marketNote: w.marketNote || '', size: w.size || 750
         
         })
       });

@@ -57,6 +57,8 @@ $extraColumns = [
     // Marktprijs: indicatie van de huidige winkelprijs per fles (NL/EU) + bron/datum
     "ALTER TABLE wines ADD COLUMN market_price DECIMAL(8,2) NULL",
     "ALTER TABLE wines ADD COLUMN market_note VARCHAR(160) DEFAULT ''",
+    // Flesformaat in ml: 375 halve fles, 750 standaard, 1500 magnum, 3000 dubbele magnum
+    "ALTER TABLE wines ADD COLUMN size SMALLINT DEFAULT 750",
 ];
 foreach ($extraColumns as $sql) {
     try {

@@ -37,6 +37,11 @@ function clean_notes($v) {
     return trim((string) $v);
 }
 
+function clean_size($v) {
+    $v = (int) $v;
+    return in_array($v, [375, 500, 750, 1500, 3000, 6000], true) ? $v : 750;
+}
+
 function clean_short($v) {
     return mb_substr(trim((string) $v), 0, 160);
 }
@@ -63,6 +68,7 @@ const EXTRA_FIELDS = [
     'image' => ['image', 'clean_image'],
     'marketPrice' => ['market_price', 'clean_price'],
     'marketNote' => ['market_note', 'clean_short'],
+    'size' => ['size', 'clean_size'],
 ];
 
 $method = $_SERVER['REQUEST_METHOD'];
@@ -96,6 +102,7 @@ switch ($method) {
                 'image' => $r['image'] ?? '',
                 'marketPrice' => isset($r['market_price']) ? (float) $r['market_price'] : null,
                 'marketNote' => $r['market_note'] ?? '',
+                'size' => isset($r['size']) ? (int) $r['size'] : 750,
             ];
         }, $rows);
         echo json_encode($wines);
