@@ -268,13 +268,47 @@
   .menu button:hover { background: var(--accent-tint); color: var(--accent); }
   .menu button.danger:hover { background: var(--drunk-bg); color: #b23a2e; }
 
-  .detail-panel { grid-column: 1 / -1; display: none; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); }
-  .detail-panel.open { display: block; }
-  .detail-section { margin-bottom: 10px; }
-  .detail-section:last-child { margin-bottom: 0; }
-  .detail-section h4 { margin: 0 0 4px; font-size: 0.76rem; color: var(--text-dim); font-weight: 700; }
-  .detail-section p { margin: 0 0 6px; font-size: 0.86rem; line-height: 1.5; }
-  .detail-list { margin: 0; padding-left: 18px; font-size: 0.86rem; line-height: 1.55; }
+  /* --- detailvenster --- */
+  .dv { text-align: center; }
+  .dv .etiket { width: 104px; height: 142px; margin: 4px auto 14px; grid-row: auto; }
+  .dv .etiket .e-year { font-size: 1.5rem; }
+  .dv-name { font-family: var(--serif); font-size: 1.3rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; line-height: 1.25; margin: 0; }
+  .dv-year { font-family: var(--serif); font-size: 1.15rem; margin-top: 2px; }
+  .dv-producer { background: none; border: none; padding: 0; margin-top: 4px; color: var(--accent); font-size: 0.9rem; cursor: pointer; }
+  .dv-producer:hover { text-decoration: underline; }
+  .dv .badge { margin: 12px 0 10px; }
+  .dv-grape { font-size: 0.95rem; }
+  .dv-region { font-size: 0.85rem; color: var(--text-dim); margin-top: 2px; }
+  .dv-section { text-align: left; border-top: 1px solid var(--border); margin-top: 16px; padding-top: 14px; }
+  .dv-section h4 { margin: 0 0 10px; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-dim); }
+  .tl { padding: 4px 4px 0; }
+  .tl-row { display: flex; align-items: center; gap: 10px; font-size: 0.82rem; font-variant-numeric: tabular-nums; }
+  .tl-track { position: relative; flex: 1; height: 6px; border-radius: 3px; background: var(--border); }
+  .tl-fill { position: absolute; top: 0; bottom: 0; left: 0; border-radius: 3px; }
+  .tl-marker { position: absolute; top: 50%; width: 16px; height: 16px; margin: -8px 0 0 -8px; border-radius: 50%; border: 3px solid var(--card-bg); }
+  .tl-label { position: relative; height: 20px; margin: 6px 44px 0; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
+  .tl-label span { position: absolute; transform: translateX(-50%); white-space: nowrap; }
+  .tl.now .tl-fill, .tl.now .tl-marker { background: var(--now); } .tl.now .tl-label { color: var(--now); }
+  .tl.soon .tl-fill, .tl.soon .tl-marker { background: var(--soon); } .tl.soon .tl-label { color: var(--soon); }
+  .tl.wait .tl-fill, .tl.wait .tl-marker { background: var(--wait); } .tl.wait .tl-label { color: var(--wait); }
+  .tl.past .tl-fill, .tl.past .tl-marker { background: var(--drunk); } .tl.past .tl-label { color: var(--drunk); }
+  .tl-note { font-size: 0.8rem; color: var(--text-dim); margin-top: 4px; }
+  .kv { display: grid; grid-template-columns: auto 1fr; gap: 7px 16px; margin-top: 14px; font-size: 0.88rem; }
+  .kv dt { color: var(--text-dim); }
+  .kv dd { margin: 0; text-align: right; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .kv dd.empty-val { color: var(--text-dim); font-weight: 400; }
+  .notes { font-size: 0.9rem; line-height: 1.55; white-space: pre-line; margin: 0; }
+  .notes.empty-val { color: var(--text-dim); font-style: italic; }
+  .dv details { margin-top: 12px; border: 1px solid var(--border); border-radius: 10px; padding: 0 12px; }
+  .dv summary { cursor: pointer; padding: 10px 0; font-size: 0.82rem; font-weight: 600; color: var(--text-dim); }
+  .dv details[open] summary { border-bottom: 1px solid var(--border); margin-bottom: 10px; }
+  .dv details h5 { margin: 0 0 4px; font-size: 0.76rem; color: var(--text-dim); }
+  .dv details p { margin: 0 0 8px; font-size: 0.86rem; line-height: 1.5; }
+  .dv details ul { margin: 0 0 10px; padding-left: 18px; font-size: 0.86rem; line-height: 1.55; }
+  .dv-actions { display: flex; flex-direction: column; gap: 10px; margin-top: 18px; }
+  .dv-actions .btn { width: 100%; min-height: 46px; font-size: 0.9rem; }
+  .dv-actions .btn.drink { background: var(--now); border-color: var(--now); color: #fff; font-weight: 600; }
+  .dv-actions .btn.drink:hover { filter: brightness(0.92); }
 
   .empty { text-align: center; color: var(--text-dim); padding: 34px 16px; font-size: 0.9rem; background: var(--card-bg-soft); border-radius: var(--radius); border: 1px solid var(--border); }
 
@@ -461,6 +495,7 @@
 
 <div class="modal-overlay" id="producerModalOverlay"><div class="modal-box" id="producerModalBox" role="dialog" aria-modal="true"></div></div>
 <div class="modal-overlay" id="confirmModalOverlay"><div class="modal-box" id="confirmModalBox" role="dialog" aria-modal="true"></div></div>
+<div class="modal-overlay" id="detailModalOverlay"><div class="modal-box" id="detailModalBox" role="dialog" aria-modal="true" aria-label="Wijndetails"></div></div>
 <div class="modal-overlay" id="editModalOverlay"><div class="modal-box" id="editModalBox" role="dialog" aria-modal="true"></div></div>
 
 <div id="toast" role="status" aria-live="polite"></div>
@@ -526,6 +561,24 @@ function deriveColor(text) {
 }
 const colorOf = w => w.color || deriveColor([w.grape, w.name, w.region].join(' '));
 const countryOf = w => (w.country || deriveCountry(w.region)).toUpperCase();
+const CURRENT_YEAR = new Date().getFullYear();
+// Drinkvenster als jaartallen. Zijn de velden nog leeg, dan halen we de jaren uit de oude tekst ("2019-2026", "tot 2030", "vanaf 2028").
+function parseWindowText(text) {
+  const t = (text || '').toLowerCase();
+  const years = (t.match(/\b(19|20)\d{2}\b/g) || []).map(Number);
+  if (years.length >= 2) return { from: Math.min(...years), to: Math.max(...years) };
+  if (years.length === 1) {
+    if (/vanaf|from|na\b|after/.test(t)) return { from: years[0], to: null };
+    return { from: null, to: years[0] };
+  }
+  return { from: null, to: null };
+}
+function windowOf(w) {
+  const parsed = parseWindowText(w.window);
+  return { from: w.windowFrom ?? parsed.from, to: w.windowTo ?? parsed.to };
+}
+const fmtDate = d => d ? new Date(d + 'T00:00:00').toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' }) : '';
+const fmtPrice = p => (p === null || p === undefined || p === '') ? '' : Number(p).toLocaleString('nl-NL', { style: 'currency', currency: 'EUR' });
 const bottles = list => list.reduce((s, w) => s + (w.qty || 1), 0);
 const plural = (n, one, many) => n + ' ' + (n === 1 ? one : many);
 
@@ -787,15 +840,116 @@ function filteredWines() {
   });
 }
 
-function detailHtml(w) {
+function timelineHtml(w) {
+  let { from, to } = windowOf(w);
+  if (!from && !to) {
+    return w.window ? `<div class="tl-note">${escapeHtml(w.window)}</div>` : '<div class="tl-note">Nog geen drinkvenster. Vul het in via Bewerken.</div>';
+  }
+  if (!from) from = w.year ? Math.min(w.year + 2, to) : to - 5;
+  if (!to) to = from + 8;
+  const span = Math.max(1, to - from);
+  const pos = Math.max(0, Math.min(100, ((CURRENT_YEAR - from) / span) * 100));
+  let cls, label;
+  if (CURRENT_YEAR < from) { cls = 'wait'; label = 'Nog ' + plural(from - CURRENT_YEAR, 'jaar', 'jaar'); }
+  else if (CURRENT_YEAR > to) { cls = 'past'; label = 'Over de top'; }
+  else { cls = 'now'; label = CURRENT_YEAR === to ? 'Nu · laatste jaar' : 'Nu'; }
+  return `<div class="tl ${cls}" role="img" aria-label="Drinkvenster ${from} tot ${to}, nu ${CURRENT_YEAR}">
+      <div class="tl-row">
+        <span>${from}</span>
+        <div class="tl-track"><div class="tl-fill" style="width:${pos}%"></div><div class="tl-marker" style="left:${pos}%"></div></div>
+        <span>${to}</span>
+      </div>
+      <div class="tl-label"><span style="left:${pos}%">${label}</span></div>
+    </div>
+    ${w.window && !/^\s*[\d\s\-–tovanaf]+\s*$/i.test(w.window) ? `<div class="tl-note">${escapeHtml(w.window)}</div>` : ''}`;
+}
+
+function openDetailModal(id) {
+  const w = wines.find(x => String(x.id) === String(id));
+  if (!w) return;
+  const color = colorOf(w);
+  const c = countryOf(w);
+  const qty = w.qty || 1;
+  const regionLine = [w.region, COUNTRIES[c]].filter(Boolean).map(escapeHtml).join(' · ') + (c ? ' ' + flag(c) : '');
   const character = (w.character || '').split(/\n\s*\n/).map(p => p.trim()).filter(Boolean).map(p => `<p>${escapeHtml(p)}</p>`).join('');
   const lines = Array.isArray(w.serving) ? w.serving : (w.serving ? String(w.serving).split('\n') : []);
   const serving = lines.map(l => String(l).trim()).filter(Boolean).map(l => `<li>${escapeHtml(l)}</li>`).join('');
-  const windowHtml = w.window ? `<div class="detail-section"><h4>Drinkvenster</h4><p>${escapeHtml(w.window)}</p></div>` : '';
-  const body = windowHtml
-    + (character ? `<div class="detail-section"><h4>Karakter</h4>${character}</div>` : '')
-    + (serving ? `<div class="detail-section"><h4>Openen &amp; serveren</h4><ul class="detail-list">${serving}</ul></div>` : '');
-  return body || '<p class="hint" style="margin:0">Nog geen details. Voeg ze toe via ⋯ → Bewerken.</p>';
+  const val = (v) => v ? `<dd>${v}</dd>` : '<dd class="empty-val">—</dd>';
+
+  document.getElementById('detailModalBox').innerHTML = `
+    <button class="modal-close" data-close="detailModalOverlay" aria-label="Sluiten" type="button">✕</button>
+    <div class="dv">
+      <div class="etiket ${color}" aria-hidden="true">
+        <span class="e-year">${w.year || 'NV'}</span><span class="e-rule"></span><span class="e-kind">${COLORS[color] || 'Wijn'}</span>
+      </div>
+      <h3 class="dv-name">${escapeHtml(w.name)}</h3>
+      ${w.year ? `<div class="dv-year">${w.year}</div>` : ''}
+      ${w.producer ? `<button class="dv-producer" data-dv="producer" type="button">${escapeHtml(w.producer)}</button>` : ''}
+      <div>${badgeHtml(w)}</div>
+      ${w.grape ? `<div class="dv-grape">${escapeHtml(w.grape)}</div>` : ''}
+      ${regionLine.trim() ? `<div class="dv-region">${regionLine}</div>` : ''}
+
+      <div class="dv-section">
+        <h4>Drinkvenster</h4>
+        ${timelineHtml(w)}
+        <dl class="kv">
+          <dt>Voorraad</dt><dd>${w.drunk ? 'Opgedronken' : plural(qty, 'fles', 'flessen')}</dd>
+          <dt>Locatie</dt>${val(w.location ? escapeHtml(w.location) : '')}
+          <dt>Aankoopdatum</dt>${val(fmtDate(w.purchaseDate))}
+          <dt>Aankoopprijs</dt>${val(fmtPrice(w.purchasePrice))}
+        </dl>
+      </div>
+
+      <div class="dv-section">
+        <h4>Mijn notities</h4>
+        ${w.notes ? `<p class="notes">${escapeHtml(w.notes)}</p>` : '<p class="notes empty-val">Nog geen notities. Voeg ze toe via Bewerken.</p>'}
+        ${(character || serving) ? `<details>
+          <summary>Karakter &amp; serveren</summary>
+          ${character ? `<h5>Karakter</h5>${character}` : ''}
+          ${serving ? `<h5>Openen &amp; serveren</h5><ul>${serving}</ul>` : ''}
+        </details>` : ''}
+      </div>
+
+      <div class="dv-actions">
+        <button class="btn" data-dv="edit" type="button">Bewerken</button>
+        ${w.drunk
+          ? `<button class="btn" data-dv="undrunk" type="button">↩ Terugzetten naar voorraad</button>`
+          : `<button class="btn drink" data-dv="drink" type="button">✓ Fles opgedronken${qty > 1 ? ` <span style="font-weight:400;opacity:.85">(${qty} → ${qty - 1})</span>` : ''}</button>`}
+      </div>
+    </div>`;
+  document.getElementById('detailModalOverlay').classList.add('open');
+  document.querySelector('#detailModalBox .modal-close').focus();
+
+  document.getElementById('detailModalBox').onclick = async e => {
+    const b = e.target.closest('[data-dv]');
+    if (!b) return;
+    const act = b.dataset.dv;
+    if (act === 'producer') { document.getElementById('detailModalOverlay').classList.remove('open'); return showProducerModal(w.producer); }
+    if (act === 'edit') { document.getElementById('detailModalOverlay').classList.remove('open'); return openEditModal(w.id); }
+    try {
+      b.disabled = true;
+      if (act === 'drink') {
+        // Eén fles minder; bij de laatste fles gaat de wijn naar Opgedronken.
+        if (qty > 1) {
+          await patchWine(w.id, { qty: qty - 1 });
+          showToast(`Proost! Nog ${plural(qty - 1, 'fles', 'flessen')} ${w.name} over.`);
+        } else {
+          await patchWine(w.id, { drunk: true });
+          showToast(`Proost! '${w.name}' staat nu bij Opgedronken.`);
+        }
+      }
+      if (act === 'undrunk') {
+        await patchWine(w.id, { drunk: false });
+        showToast(`'${w.name}' teruggezet naar voorraad.`);
+      }
+      document.getElementById('detailModalOverlay').classList.remove('open');
+      await loadWines();
+      render();
+    } catch (err) {
+      b.disabled = false;
+      showNotice('Wijziging kon niet worden opgeslagen. Probeer opnieuw.');
+    }
+  };
 }
 
 function cardHtml(w) {
@@ -836,14 +990,13 @@ function cardHtml(w) {
       ${w.drunk
         ? `<button class="btn" data-action="undrunk" data-id="${w.id}" ${writable ? '' : 'disabled'} type="button">↩ Terugzetten</button>`
         : `<button class="btn primary" data-action="drunk" data-id="${w.id}" ${writable ? '' : 'disabled'} type="button">✓ Opgedronken</button>`}
-      <button class="btn" data-action="toggleDetail" data-id="${w.id}" aria-expanded="false" aria-controls="detail-${w.id}" type="button">Details</button>
+      <button class="btn" data-action="details" data-id="${w.id}" aria-haspopup="dialog" type="button">Details</button>
       <button class="btn more" data-action="menu" data-id="${w.id}" aria-haspopup="true" aria-expanded="false" aria-label="Meer acties" type="button">⋯</button>
     </div>
     <div class="menu" id="menu-${w.id}" role="menu">
       <button data-action="edit" data-id="${w.id}" role="menuitem" type="button">✎ Bewerken</button>
       <button class="danger" data-action="delete" data-id="${w.id}" role="menuitem" type="button">🗑 Verwijderen</button>
-    </div>
-    <div class="detail-panel" id="detail-${w.id}">${detailHtml(w)}</div>`;
+    </div>`;
 }
 
 function renderList() {
@@ -912,11 +1065,7 @@ document.getElementById('list').addEventListener('click', async e => {
     if (open) menu.querySelector('button').focus();
     return;
   }
-  if (action === 'toggleDetail') {
-    const open = document.getElementById('detail-' + id).classList.toggle('open');
-    btn.setAttribute('aria-expanded', String(open));
-    return;
-  }
+  if (action === 'details') return openDetailModal(id);
   if (action === 'edit') { closeMenus(); return openEditModal(id); }
   if (action === 'delete') { closeMenus(); return openDeleteConfirm(id); }
 
@@ -945,6 +1094,7 @@ function wineFields(prefix, w = {}) {
   const derivedColor = w.name ? colorOf(w) : '';
   const derivedCountry = w.name ? countryOf(w) : '';
   const serving = (Array.isArray(w.serving) ? w.serving : (w.serving ? String(w.serving).split('\n') : [])).join('\n');
+  const win = w.name ? windowOf(w) : { from: null, to: null };
   return `
     <label for="${prefix}_producer">Producent / huis</label>
     <input id="${prefix}_producer" value="${escapeHtml(w.producer || '')}" placeholder="Château de Cîteaux">
@@ -967,8 +1117,17 @@ function wineFields(prefix, w = {}) {
       <div><label for="${prefix}_location">Locatie</label><input id="${prefix}_location" value="${escapeHtml(w.location || '')}" placeholder="B-04"></div>
       ${prefix === 'f' ? `<div><label for="f_qty">Aantal flessen</label><input id="f_qty" type="number" min="1" value="1"></div>` : '<div></div>'}
     </div>
-    <label for="${prefix}_window">Drinkvenster / notitie</label>
-    <input id="${prefix}_window" value="${escapeHtml(w.window || '')}" placeholder="tot 2030">
+    <div class="form-row">
+      <div><label for="${prefix}_wfrom">Drinken vanaf</label><input id="${prefix}_wfrom" type="number" inputmode="numeric" value="${win.from || ''}" placeholder="2019"></div>
+      <div><label for="${prefix}_wto">Drinken tot</label><input id="${prefix}_wto" type="number" inputmode="numeric" value="${win.to || ''}" placeholder="2026"></div>
+      <div><label for="${prefix}_window">Toelichting</label><input id="${prefix}_window" value="${escapeHtml(w.window || '')}" placeholder="piek rond 2024"></div>
+    </div>
+    <div class="form-row two">
+      <div><label for="${prefix}_pdate">Aankoopdatum</label><input id="${prefix}_pdate" type="date" value="${escapeHtml(w.purchaseDate || '')}"></div>
+      <div><label for="${prefix}_pprice">Aankoopprijs (€)</label><input id="${prefix}_pprice" type="number" inputmode="decimal" min="0" step="0.01" value="${w.purchasePrice ?? ''}" placeholder="45,00"></div>
+    </div>
+    <label for="${prefix}_notes">Mijn notities</label>
+    <textarea id="${prefix}_notes" rows="3" placeholder="Gedronken met..., cadeau van..., indruk">${escapeHtml(w.notes || '')}</textarea>
     <label for="${prefix}_character">Karakter</label>
     <textarea id="${prefix}_character" rows="4" placeholder="Smaak, stijl, druivenmix...">${escapeHtml(w.character || '')}</textarea>
     <label for="${prefix}_serving">Openen &amp; serveren (één tip per regel)</label>
@@ -980,6 +1139,9 @@ function readFields(prefix) {
     producer: v('producer'), name: v('name'), grape: v('grape'), region: v('region'),
     country: v('country'), color: v('color'), year: parseInt(v('year')) || null,
     status: v('status'), location: v('location'), window: v('window'), character: v('character'),
+    windowFrom: parseInt(v('wfrom')) || null, windowTo: parseInt(v('wto')) || null,
+    purchaseDate: v('pdate') || null, purchasePrice: v('pprice') === '' ? null : parseFloat(v('pprice').replace(',', '.')),
+    notes: document.getElementById(prefix + '_notes').value.trim(),
     serving: document.getElementById(prefix + '_serving').value.split('\n').map(l => l.trim()).filter(Boolean)
   };
 }
@@ -1046,7 +1208,10 @@ document.getElementById('bulkSaveBtn').addEventListener('click', async () => {
           name: w.name, producer: w.producer || '', grape: w.grape || '', region: w.region || '',
           country: w.country || deriveCountry(w.region), color: w.color || deriveColor([w.grape, w.name, w.region].join(' ')),
           year: w.year || null, status: w.status || 'wait', window: w.window || '', location: w.location || '',
-          character: w.character || '', serving: w.serving || [], qty: w.qty || 1
+          character: w.character || '', serving: w.serving || [], qty: w.qty || 1,
+          windowFrom: w.windowFrom || null, windowTo: w.windowTo || null,
+          purchaseDate: w.purchaseDate || null, purchasePrice: w.purchasePrice ?? null, notes: w.notes || ''
+        
         })
       });
       if (!res.ok) throw new Error('save failed');

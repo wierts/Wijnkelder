@@ -46,6 +46,12 @@ $extraColumns = [
     "ALTER TABLE wines ADD COLUMN color VARCHAR(20) DEFAULT ''",
     "ALTER TABLE wines ADD COLUMN country VARCHAR(2) DEFAULT ''",
     "ALTER TABLE wines ADD COLUMN location VARCHAR(50) DEFAULT ''",
+    // Detailvenster: drinkvenster als jaartallen, aankoopgegevens en eigen notities
+    "ALTER TABLE wines ADD COLUMN window_from SMALLINT NULL",
+    "ALTER TABLE wines ADD COLUMN window_to SMALLINT NULL",
+    "ALTER TABLE wines ADD COLUMN purchase_date DATE NULL",
+    "ALTER TABLE wines ADD COLUMN purchase_price DECIMAL(8,2) NULL",
+    "ALTER TABLE wines ADD COLUMN notes TEXT NULL",
 ];
 foreach ($extraColumns as $sql) {
     try {

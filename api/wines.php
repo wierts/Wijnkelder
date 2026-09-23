@@ -17,6 +17,38 @@ function clean_location($v) {
     return mb_substr(trim((string) $v), 0, 50);
 }
 
+function clean_year($v) {
+    $v = (int) $v;
+    return ($v >= 1900 && $v <= 2200) ? $v : null;
+}
+
+function clean_date($v) {
+    $v = trim((string) $v);
+    return preg_match('/^\d{4}-\d{2}-\d{2}$/', $v) ? $v : null;
+}
+
+function clean_price($v) {
+    if ($v === null || $v === '') return null;
+    $v = (float) str_replace(',', '.', (string) $v);
+    return $v >= 0 ? round($v, 2) : null;
+}
+
+function clean_notes($v) {
+    return trim((string) $v);
+}
+
+// Extra velden die via POST en PATCH gezet kunnen worden: JSON-sleutel => [kolom, opschoonfunctie]
+const EXTRA_FIELDS = [
+    'color' => ['color', 'clean_color'],
+    'country' => ['country', 'clean_country'],
+    'location' => ['location', 'clean_location'],
+    'windowFrom' => ['window_from', 'clean_year'],
+    'windowTo' => ['window_to', 'clean_year'],
+    'purchaseDate' => ['purchase_date', 'clean_date'],
+    'purchasePrice' => ['purchase_price', 'clean_price'],
+    'notes' => ['notes', 'clean_notes'],
+];
+
 $method = $_SERVER['REQUEST_METHOD'];
 
 switch ($method) {
@@ -40,6 +72,11 @@ switch ($method) {
                 'color' => $r['color'] ?? '',
                 'country' => $r['country'] ?? '',
                 'location' => $r['location'] ?? '',
+                'windowFrom' => isset($r['window_from']) ? (int) $r['window_from'] : null,
+                'windowTo' => isset($r['window_to']) ? (int) $r['window_to'] : null,
+                'purchaseDate' => $r['purchase_date'] ?? null,
+                'purchasePrice' => isset($r['purchase_price']) ? (float) $r['purchase_price'] : null,
+                'notes' => $r['notes'] ?? '',
             ];
         }, $rows);
         echo json_encode($wines);
@@ -52,8 +89,8 @@ switch ($method) {
             echo json_encode(['error' => 'name is verplicht']);
             exit;
         }
-        $stmt = $pdo->prepare('INSERT INTO wines (name, grape, region, year, status, window_note, character_note, serving_json, drunk, qty, producer, color, country, location) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?, ?)');
-        $stmt->execute([
+        $cols = ['name', 'grape', 'region', 'year', 'status', 'window_note', 'character_note', 'serving_json', 'drunk', 'qty', 'producer'];
+        $vals = [
             $data['name'],
             $data['grape'] ?? '',
             $data['region'] ?? '',
@@ -62,12 +99,16 @@ switch ($method) {
             $data['window'] ?? '',
             $data['character'] ?? '',
             json_encode($data['serving'] ?? []),
+            0,
             $data['qty'] ?? 1,
             $data['producer'] ?? '',
-            clean_color($data['color'] ?? ''),
-            clean_country($data['country'] ?? ''),
-            clean_location($data['location'] ?? ''),
-        ]);
+        ];
+        foreach (EXTRA_FIELDS as $key => [$col, $clean]) {
+            $cols[] = $col;
+            $vals[] = $clean($data[$key] ?? null);
+        }
+        $stmt = $pdo->prepare('INSERT INTO wines (' . implode(', ', $cols) . ') VALUES (' . implode(', ', array_fill(0, count($cols), '?')) . ')');
+        $stmt->execute($vals);
         echo json_encode(['id' => (string) $pdo->lastInsertId()]);
         break;
 
@@ -99,17 +140,11 @@ switch ($method) {
                 $vals[] = $data[$key];
             }
         }
-        if (array_key_exists('color', $data)) {
-            $sets[] = 'color = ?';
-            $vals[] = clean_color($data['color']);
-        }
-        if (array_key_exists('country', $data)) {
-            $sets[] = 'country = ?';
-            $vals[] = clean_country($data['country']);
-        }
-        if (array_key_exists('location', $data)) {
-            $sets[] = 'location = ?';
-            $vals[] = clean_location($data['location']);
+        foreach (EXTRA_FIELDS as $key => [$col, $clean]) {
+            if (array_key_exists($key, $data)) {
+                $sets[] = "$col = ?";
+                $vals[] = $clean($data[$key]);
+            }
         }
         if (array_key_exists('serving', $data)) {
             $sets[] = 'serving_json = ?';
