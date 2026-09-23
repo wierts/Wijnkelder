@@ -229,6 +229,7 @@
   .history-summary .stat { cursor: default; }
   .fav-panel { margin-bottom: 16px; }
   .fav-panel h2 { font-size: 0.95rem; margin: 0 0 8px; }
+  .value-big { font-family: var(--serif); font-size: 1.8rem; font-weight: 700; margin: 2px 0 4px; }
   .fav-list { display: flex; flex-wrap: wrap; gap: 6px; }
   .fav-list .chip { cursor: default; }
   .t-card { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 12px; }
@@ -372,6 +373,7 @@
   .kv { display: grid; grid-template-columns: auto 1fr; gap: 7px 16px; margin-top: 14px; font-size: 0.88rem; }
   .kv dt { color: var(--text-dim); }
   .kv dd { margin: 0; text-align: right; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .kv-note { font-weight: 400; color: var(--text-dim); font-size: 0.8rem; }
   .kv dd.empty-val { color: var(--text-dim); font-weight: 400; }
   .notes { font-size: 0.9rem; line-height: 1.55; white-space: pre-line; margin: 0; }
   .notes.empty-val { color: var(--text-dim); font-style: italic; }
@@ -579,6 +581,7 @@
         <option value="name">↕ Naam A-Z</option>
         <option value="producer">↕ Producent</option>
         <option value="qty">↕ Voorraad</option>
+        <option value="price">↕ Marktprijs hoog → laag</option>
       </select>
     </div>
   </section>
@@ -784,6 +787,9 @@ function etiketFallback(color, year) {
       <span class="e-year">${year || 'NV'}</span><span class="e-rule"></span><span class="e-kind">${COLORS[color] || 'Wijn'}</span>
     </div>`;
 }
+const hasPrice = w => w.marketPrice !== null && w.marketPrice !== undefined && w.marketPrice !== '';
+const isEstimate = w => /schatting/i.test(w.marketNote || '');
+const fmtEuro0 = n => Number(n).toLocaleString('nl-NL', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 });
 const starsText = r => r ? '★'.repeat(r) + '☆'.repeat(5 - r) : '';
 
 /* ---------- data ---------- */
@@ -1214,6 +1220,7 @@ function filteredWines() {
       case 'name': return (a.name || '').localeCompare(b.name || '');
       case 'producer': return (a.producer || '').localeCompare(b.producer || '');
       case 'qty': return (b.qty || 0) - (a.qty || 0);
+      case 'price': return (b.marketPrice || 0) - (a.marketPrice || 0);
       default: return (statusOrder[a.status] - statusOrder[b.status]) || ((a.year || 0) - (b.year || 0));
     }
   });
@@ -1275,7 +1282,10 @@ function openDetailModal(id) {
           <dt>Locatie</dt>${val(locText(w) ? escapeHtml(locText(w)) : '')}
           <dt>Aankoopdatum</dt>${val(fmtDate(w.purchaseDate))}
           <dt>Aankoopprijs</dt>${val(fmtPrice(w.purchasePrice))}
+          <dt>Marktprijs</dt>${val(hasPrice(w) ? '≈ ' + fmtPrice(w.marketPrice) + (isEstimate(w) ? ' <span class="kv-note">(schatting)</span>' : '') : '')}
+          ${hasPrice(w) && qty > 1 ? `<dt>Waarde voorraad</dt><dd>≈ ${fmtPrice(w.marketPrice * qty)}</dd>` : ''}
         </dl>
+        ${w.marketNote ? `<div class="tl-note" style="text-align:right">${escapeHtml(w.marketNote)}</div>` : ''}
       </div>
 
       <div class="dv-section">
@@ -1343,6 +1353,7 @@ function cardHtml(w) {
       <div class="card-facts">
         <span>🍾 ${w.drunk ? 'Opgedronken' : plural(qty, 'fles', 'flessen')}</span>
         <span>📍 ${loc ? escapeHtml(loc) : '<span class="meta-empty">geen locatie</span>'}</span>
+        ${hasPrice(w) ? `<span title="Marktprijs per fles${w.marketNote ? ': ' + escapeHtml(w.marketNote) : ''}">💶 ≈ ${fmtEuro0(w.marketPrice)}</span>` : ''}
       </div>
     </div>
     <div class="actions">
@@ -1491,6 +1502,10 @@ function wineFields(prefix, w = {}) {
       <div><label for="${prefix}_pdate">Aankoopdatum</label><input id="${prefix}_pdate" type="date" value="${escapeHtml(w.purchaseDate || '')}"></div>
       <div><label for="${prefix}_pprice">Aankoopprijs (€)</label><input id="${prefix}_pprice" type="number" inputmode="decimal" min="0" step="0.01" value="${w.purchasePrice ?? ''}" placeholder="45,00"></div>
     </div>
+    <div class="form-row two">
+      <div><label for="${prefix}_mprice">Marktprijs (€ per fles)</label><input id="${prefix}_mprice" type="number" inputmode="decimal" min="0" step="0.01" value="${w.marketPrice ?? ''}" placeholder="30,00"></div>
+      <div><label for="${prefix}_mnote">Bron marktprijs</label><input id="${prefix}_mnote" value="${escapeHtml(w.marketNote || '')}" placeholder="Vivino NL, sept 2026"></div>
+    </div>
     <label for="${prefix}_photo">Etiketfoto</label>
     <div class="photo-row">
       <div class="photo-prev" id="${prefix}_prev">${w.image ? `<img src="${escapeHtml(w.image)}" alt="">` : '📷'}</div>
@@ -1516,6 +1531,8 @@ function readFields(prefix) {
     purchaseDate: v('pdate') || null, purchasePrice: v('pprice') === '' ? null : parseFloat(v('pprice').replace(',', '.')),
     notes: document.getElementById(prefix + '_notes').value.trim(),
     image: v('image'),
+    marketPrice: v('mprice') === '' ? null : parseFloat(v('mprice').replace(',', '.')),
+    marketNote: v('mnote'),
     serving: document.getElementById(prefix + '_serving').value.split('\n').map(l => l.trim()).filter(Boolean)
   };
 }
@@ -1613,7 +1630,7 @@ document.getElementById('bulkSaveBtn').addEventListener('click', async () => {
           year: w.year || null, status: w.status || 'wait', window: w.window || '', location: w.location || '',
           character: w.character || '', serving: w.serving || [], qty: w.qty || 1,
           windowFrom: w.windowFrom || null, windowTo: w.windowTo || null,
-          purchaseDate: w.purchaseDate || null, purchasePrice: w.purchasePrice ?? null, notes: w.notes || '', image: w.image || ''
+          purchaseDate: w.purchaseDate || null, purchasePrice: w.purchasePrice ?? null, notes: w.notes || '', image: w.image || '', marketPrice: w.marketPrice ?? null, marketNote: w.marketNote || ''
         
         })
       });
@@ -1715,13 +1732,30 @@ function renderHistory() {
   };
   const best = [...rated].sort((a, b) => b.rating - a.rating || (b.date || '').localeCompare(a.date || '')).slice(0, 3);
   const regions = top('region'), prods = top('producer');
-  document.getElementById('historyFavs').innerHTML = list.length ? `
+  // Kelderwaarde op basis van marktprijs × aantal flessen
+  const inCellar = wines.filter(w => !w.drunk);
+  const priced = inCellar.filter(hasPrice);
+  const value = priced.reduce((s, w) => s + w.marketPrice * (w.qty || 1), 0);
+  const pricedBottles = bottles(priced);
+  const unpriced = bottles(inCellar) - pricedBottles;
+  const estBottles = bottles(priced.filter(isEstimate));
+  const top3 = [...priced].sort((a, b) => b.marketPrice - a.marketPrice).slice(0, 3);
+  const valueHtml = priced.length ? `
+    <section class="panel fav-panel">
+      <h2>💶 Kelderwaarde</h2>
+      <div class="value-big">≈ ${fmtEuro0(value)}</div>
+      <div class="hint">${plural(pricedBottles, 'fles', 'flessen')} · gemiddeld ${fmtPrice(value / pricedBottles)} per fles${unpriced ? ` · ${plural(unpriced, 'fles', 'flessen')} zonder prijs` : ''}${estBottles ? ` · ${estBottles} op basis van schatting` : ''}</div>
+      <div class="hint" style="margin-top:2px">Indicatie op basis van huidige winkelprijzen (NL/EU), niet wat je zelf betaalde.</div>
+      <h2 style="margin-top:14px">Duurste flessen</h2>
+      <div class="fav-list">${top3.map(w => `<button class="chip" data-open="${w.id}" type="button" style="cursor:pointer">${escapeHtml(w.name)}${w.year ? ' ' + w.year : ''} · ${fmtEuro0(w.marketPrice)}</button>`).join('')}</div>
+    </section>` : '';
+  document.getElementById('historyFavs').innerHTML = valueHtml + (list.length ? `
     <section class="panel fav-panel">
       ${best.length ? `<h2>🏆 Beste wijnen</h2><div class="fav-list" style="margin-bottom:12px">${best.map(t => `<span class="chip">${escapeHtml(t.name)}${t.year ? ' ' + t.year : ''} · <span style="color:#d4a017">${'★'.repeat(t.rating)}</span></span>`).join('')}</div>` : ''}
       ${regions.length ? `<h2>📍 Favoriete regio's</h2><div class="fav-list" style="margin-bottom:12px">${regions.map(([r, n]) => `<span class="chip">${escapeHtml(r)} · ${n}</span>`).join('')}</div>` : ''}
       ${prods.length ? `<h2>🏠 Favoriete producenten</h2><div class="fav-list" style="margin-bottom:${rebuy.length ? 12 : 0}px">${prods.map(([r, n]) => `<span class="chip">${escapeHtml(r)} · ${n}</span>`).join('')}</div>` : ''}
       ${rebuy.length ? `<h2>🛒 Opnieuw kopen</h2><div class="fav-list">${[...new Map(rebuy.map(t => [t.name + t.producer, t])).values()].map(t => `<span class="chip">${escapeHtml(t.producer ? t.producer + ' · ' : '')}${escapeHtml(t.name)}</span>`).join('')}</div>` : ''}
-    </section>` : '';
+    </section>` : '');
 
   document.getElementById('historyList').innerHTML = list.length
     ? `<div class="group-head"><h3>Drinkhistorie</h3><span>${plural(list.length, 'fles', 'flessen')}</span></div>` + list.map(t => `
