@@ -484,6 +484,19 @@
   .form textarea.mono { min-height: 140px; font-family: ui-monospace, monospace; font-size: 0.78rem; }
   .form-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
   .form-row.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .scan-btn {
+    display: flex; flex-direction: column; align-items: center; gap: 3px; cursor: pointer;
+    border: 2px dashed var(--accent); border-radius: 12px; padding: 14px; margin: 2px 0 6px;
+    color: var(--accent); font-weight: 700; font-size: 1rem; text-align: center; background: var(--accent-tint);
+  }
+  .scan-btn span { font-weight: 400; font-size: 0.78rem; color: var(--text-dim); }
+  .form label.scan-btn { font-size: 1rem; color: var(--accent); margin: 2px 0 6px; display: flex; }
+  #scanResult .notice { background: var(--soon-bg); color: var(--soon); border-radius: 10px; padding: 10px 12px; font-size: 0.82rem; margin-top: 8px; }
+  .scan-busy { display: flex; align-items: center; gap: 10px; font-size: 0.88rem; padding: 10px 2px; }
+  .spinner { width: 18px; height: 18px; border-radius: 50%; border: 3px solid var(--border); border-top-color: var(--accent); animation: spin 0.8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .scan-ok { background: var(--now-bg); color: var(--text); border-radius: 10px; padding: 10px 12px; font-size: 0.86rem; margin-top: 8px; }
+  .scan-dup { border: 1px solid var(--soon); border-radius: 10px; padding: 10px 12px; font-size: 0.86rem; margin-top: 8px; }
   .photo-row { display: flex; gap: 12px; align-items: center; }
   .photo-prev {
     width: 56px; height: 76px; border-radius: 6px; border: 1px dashed var(--border); background: #fff;
@@ -1548,10 +1561,13 @@ function readFields(prefix) {
 
 async function uploadPhoto(prefix, id) {
   const input = document.getElementById(prefix + '_photo');
-  if (!input || !input.files || !input.files[0]) return;
+  const chosen = input && input.files && input.files[0];
+  // Geen eigen foto gekozen? Dan de gescande etiketfoto gebruiken.
+  const file = chosen || (prefix === 'f' ? scanState.blob : null);
+  if (!file) return;
   const fd = new FormData();
   fd.append('id', id);
-  fd.append('photo', input.files[0]);
+  fd.append('photo', file, 'etiket.jpg');
   const res = await fetch(UPLOAD_URL, { method: 'POST', body: fd });
   if (!res.ok) {
     let msg = 'Foto kon niet worden geüpload.';
@@ -1573,12 +1589,128 @@ document.addEventListener('input', e => {
   document.getElementById(m[1] + '_prev').innerHTML = /^https:\/\//.test(v) ? `<img src="${escapeHtml(v)}" alt="">` : '📷';
 });
 
+/* ---------- etiket scannen (Gemini) ---------- */
+const SCAN_URL = 'api/scan.php';
+const scanState = { blob: null };
+// Foto verkleinen in de browser: sneller uploaden en minder data naar Gemini
+function shrinkImage(file, max = 1600) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      const scale = Math.min(1, max / Math.max(img.naturalWidth, img.naturalHeight));
+      const c = document.createElement('canvas');
+      c.width = Math.round(img.naturalWidth * scale);
+      c.height = Math.round(img.naturalHeight * scale);
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      URL.revokeObjectURL(img.src);
+      c.toBlob(b => b ? resolve(b) : reject(new Error('verkleinen mislukt')), 'image/jpeg', 0.85);
+    };
+    img.onerror = () => reject(new Error('foto kon niet worden gelezen'));
+    img.src = URL.createObjectURL(file);
+  });
+}
+const norm = t => (t || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9 ]/g, ' ').split(/\s+/).filter(x => x.length > 2);
+function overlap(a, b) {
+  const A = new Set(norm(a)), B = norm(b);
+  if (!A.size || !B.length) return 0;
+  return B.filter(x => A.has(x)).length / Math.min(A.size, new Set(B).size);
+}
+// Zoek of de gescande wijn al in de kelder staat
+function findExisting(sw) {
+  let best = null;
+  wines.forEach(w => {
+    const score = overlap(w.producer, sw.producer) * 0.45 + overlap(w.name, sw.name) * 0.55;
+    if (score > 0.55 && (!best || score > best.score)) best = { wine: w, score };
+  });
+  return best && best.wine;
+}
+function setField(id, v) {
+  const el = document.getElementById(id);
+  if (!el || v === undefined || v === null || v === '' || v === 0) return;
+  el.value = v;
+  if (el.tagName === 'SELECT') el.dataset.touched = '1';
+}
+function fillFromScan(sw) {
+  setField('f_producer', sw.producer); setField('f_name', sw.name); setField('f_grape', sw.grape);
+  setField('f_region', sw.region); setField('f_country', (sw.country || '').toUpperCase()); setField('f_color', sw.color);
+  setField('f_year', sw.year); setField('f_status', sw.status); setField('f_wfrom', sw.windowFrom); setField('f_wto', sw.windowTo);
+  setField('f_window', sw.window); setField('f_character', sw.character);
+  if (Array.isArray(sw.serving)) setField('f_serving', sw.serving.join('\n'));
+  if (sw.priceEstimate > 0) {
+    setField('f_mprice', Math.round(sw.priceEstimate * 100) / 100);
+    const maand = new Date().toLocaleDateString('nl-NL', { month: 'short', year: 'numeric' });
+    setField('f_mnote', maand + ' · schatting (etiketscan)');
+  }
+}
+async function runScan(file) {
+  const box = document.getElementById('scanResult');
+  box.innerHTML = '<div class="scan-busy"><span class="spinner" aria-hidden="true"></span> Etiket wordt gelezen…</div>';
+  try {
+    const blob = await shrinkImage(file);
+    scanState.blob = blob;
+    document.getElementById('f_prev').innerHTML = `<img src="${URL.createObjectURL(blob)}" alt="">`;
+    const fd = new FormData();
+    fd.append('photo', blob, 'etiket.jpg');
+    const res = await fetch(SCAN_URL, { method: 'POST', body: fd });
+    const j = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      box.innerHTML = `<div class="notice">${j.error === 'not_configured'
+        ? 'Scannen is nog niet ingesteld. Zet je Gemini-sleutel in <code>api/config.php</code>.'
+        : escapeHtml(j.error || 'Scannen mislukt. Probeer een scherpere foto.')}</div>`;
+      return;
+    }
+    const sw = j.wine || {};
+    fillFromScan(sw);
+    const found = findExisting(sw);
+    const conf = { high: 'zeker', medium: 'redelijk zeker', low: 'onzeker — controleer de velden' }[sw.confidence] || '';
+    let html = `<div class="scan-ok">✓ Herkend: <strong>${escapeHtml([sw.producer, sw.name, sw.year || ''].filter(Boolean).join(' · '))}</strong>${conf ? ` <span class="hint">(${conf})</span>` : ''}<div class="hint">Controleer de velden hieronder en tik op Opslaan. De foto wordt je etiketfoto.</div></div>`;
+    if (found) {
+      const sameYear = !sw.year || String(found.year) === String(sw.year);
+      html += `<div class="scan-dup">
+        <div><strong>Deze wijn staat al in je kelder:</strong> ${escapeHtml(found.name)}${found.year ? ' ' + found.year : ''} · ${found.drunk ? 'opgedronken' : plural(found.qty || 1, 'fles', 'flessen')}${locText(found) ? ' · 📍 ' + escapeHtml(locText(found)) : ''}${sameYear ? '' : ` <span class="hint">(andere jaargang: gescand ${sw.year})</span>`}</div>
+        <div class="confirm-actions" style="margin-top:10px">
+          <button class="btn" data-scan-open="${found.id}" type="button">Details</button>
+          ${sameYear ? `<button class="btn save-fill" data-scan-plus="${found.id}" type="button">+1 fles bij bestaande</button>` : ''}
+        </div>
+      </div>`;
+    }
+    box.innerHTML = html;
+  } catch (err) {
+    box.innerHTML = '<div class="notice">Scannen mislukt. Controleer je verbinding en probeer opnieuw.</div>';
+  }
+}
+document.getElementById('addModalOverlay').addEventListener('click', async e => {
+  const o = e.target.closest('[data-scan-open]');
+  if (o) { document.getElementById('addModalOverlay').classList.remove('open'); return openDetailModal(o.dataset.scanOpen); }
+  const p = e.target.closest('[data-scan-plus]');
+  if (p) {
+    const w = wines.find(x => String(x.id) === p.dataset.scanPlus);
+    if (!w) return;
+    try {
+      await patchWine(w.id, w.drunk ? { drunk: false, qty: 1 } : { qty: (w.qty || 1) + 1 });
+      if (!w.image && scanState.blob) {
+        const fd = new FormData(); fd.append('id', w.id); fd.append('photo', scanState.blob, 'etiket.jpg');
+        await fetch(UPLOAD_URL, { method: 'POST', body: fd });
+      }
+      document.getElementById('addModalOverlay').classList.remove('open');
+      await loadWines(); render();
+      showToast(`Fles bijgeteld bij '${w.name}'.`);
+    } catch (err) { showNotice('Kon de fles niet bijtellen. Probeer opnieuw.'); }
+  }
+});
+document.addEventListener('change', e => {
+  if (e.target.id === 'scanInput' && e.target.files[0]) { runScan(e.target.files[0]); e.target.value = ''; }
+});
+
 function openAddModal() {
-  document.getElementById('panel-single').innerHTML = wineFields('f') + `
+  scanState.blob = null;
+  document.getElementById('panel-single').innerHTML = `
+    <label class="scan-btn" for="scanInput">📷 Scan etiket<span>Maak een foto van het etiket; de velden worden automatisch ingevuld</span></label>
+    <input id="scanInput" type="file" accept="image/*" capture="environment" hidden>
+    <div id="scanResult"></div>` + wineFields('f') + `
     <div class="confirm-actions"><button class="btn save-fill" id="saveBtn" type="button">Opslaan</button></div>`;
   document.getElementById('saveBtn').addEventListener('click', saveNewWine);
   document.getElementById('addModalOverlay').classList.add('open');
-  document.getElementById('f_producer').focus();
 }
 document.getElementById('openAddBtn').addEventListener('click', openAddModal);
 document.querySelectorAll('#addModalOverlay .tab').forEach(tab => tab.addEventListener('click', () => {
