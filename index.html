@@ -379,6 +379,28 @@
   .tl.wait .tl-fill, .tl.wait .tl-marker { background: var(--wait); } .tl.wait .tl-label { color: var(--wait); }
   .tl.past .tl-fill, .tl.past .tl-marker { background: var(--drunk); } .tl.past .tl-label { color: var(--drunk); }
   .tl-note { font-size: 0.8rem; color: var(--text-dim); margin-top: 4px; }
+  /* Drinkvenster-tijdlijn: jaargang → vanaf → nu → tot */
+  .dw { --c: var(--now); position: relative; padding: 22px 6px 40px; font-variant-numeric: tabular-nums; }
+  .dw.soon { --c: var(--soon); } .dw.wait { --c: var(--wait); } .dw.past { --c: var(--drunk); }
+  .dw-axis { position: relative; height: 12px; }
+  .dw-line { position: absolute; left: 0; right: 0; top: 5px; height: 2px; background: var(--border); border-radius: 1px; }
+  .dw-band { position: absolute; top: 0; height: 12px; border-radius: 6px; background: var(--c); }
+  .dw-tick { position: absolute; top: 1px; width: 2px; height: 10px; margin-left: -1px; background: var(--text-dim); opacity: 0.6; }
+  .dw-year { position: absolute; top: -20px; font-size: 0.74rem; color: var(--text-dim); transform: translateX(-50%); white-space: nowrap; }
+  .dw-year.start { transform: none; } .dw-year.end { transform: translateX(-100%); }
+  .dw-year.win { color: var(--c); font-weight: 700; }
+  .dw-now { position: absolute; top: 14px; transform: translateX(-50%); text-align: center; line-height: 1.1; color: var(--text); white-space: nowrap; }
+  .dw-now .arrow { display: block; font-size: 0.8rem; }
+  .dw-now .txt { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
+  .dw-now.start { transform: translateX(-6px); text-align: left; } .dw-now.end { transform: translateX(calc(-100% + 6px)); text-align: right; }
+  .dw-sum { font-size: 0.82rem; font-weight: 600; color: var(--c); margin-top: 2px; }
+  /* Compacte variant op de kaart */
+  .dw-mini { --c: var(--now); display: flex; align-items: center; gap: 8px; margin-top: 8px; font-size: 0.74rem; color: var(--text-dim); font-variant-numeric: tabular-nums; }
+  .dw-mini.soon { --c: var(--soon); } .dw-mini.wait { --c: var(--wait); } .dw-mini.past { --c: var(--drunk); }
+  .dw-mini .dw-axis { flex: 1; max-width: 220px; height: 8px; }
+  .dw-mini .dw-line { top: 3px; }
+  .dw-mini .dw-band { height: 8px; border-radius: 4px; }
+  .dw-mini .dw-pin { position: absolute; top: -3px; width: 2px; height: 14px; margin-left: -1px; background: var(--text); border-radius: 1px; }
   .kv { display: grid; grid-template-columns: auto 1fr; gap: 7px 16px; margin-top: 14px; font-size: 0.88rem; }
   .kv dt { color: var(--text-dim); }
   .kv dd { margin: 0; text-align: right; font-weight: 600; font-variant-numeric: tabular-nums; }
@@ -1248,28 +1270,63 @@ function filteredWines() {
   });
 }
 
-function timelineHtml(w) {
+// Drinkvenster-gegevens voor de tijdlijn: as loopt van jaargang (of iets vóór 'vanaf') tot 'tot' (of nu).
+function windowData(w) {
   let { from, to } = windowOf(w);
-  if (!from && !to) {
-    return w.window ? `<div class="tl-note">${escapeHtml(w.window)}</div>` : '<div class="tl-note">Nog geen drinkvenster. Vul het in via Bewerken.</div>';
-  }
+  if (!from && !to) return null;
   if (!from) from = w.year ? Math.min(w.year + 2, to) : to - 5;
   if (!to) to = from + 8;
-  const span = Math.max(1, to - from);
-  const pos = Math.max(0, Math.min(100, ((CURRENT_YEAR - from) / span) * 100));
-  let cls, label;
-  if (CURRENT_YEAR < from) { cls = 'wait'; label = 'Nog ' + plural(from - CURRENT_YEAR, 'jaar', 'jaar'); }
-  else if (CURRENT_YEAR > to) { cls = 'past'; label = 'Over de top'; }
-  else { cls = 'now'; label = CURRENT_YEAR === to ? 'Nu · laatste jaar' : 'Nu'; }
-  return `<div class="tl ${cls}" role="img" aria-label="Drinkvenster ${from} tot ${to}, nu ${CURRENT_YEAR}">
-      <div class="tl-row">
-        <span>${from}</span>
-        <div class="tl-track"><div class="tl-fill" style="width:${pos}%"></div><div class="tl-marker" style="left:${pos}%"></div></div>
-        <span>${to}</span>
+  const now = CURRENT_YEAR;
+  const vintage = w.year && w.year < from ? w.year : null;
+  const min = Math.min(vintage || from - 2, from, now);
+  const max = Math.max(to, now);
+  const span = Math.max(1, max - min);
+  const pct = y => ((y - min) / span) * 100;
+  const cls = now < from ? 'wait' : now > to ? 'past' : (to - now <= 1 ? 'soon' : 'now');
+  return { from, to, now, vintage, min, max, pct, cls };
+}
+
+function timelineHtml(w) {
+  const d = windowData(w);
+  if (!d) {
+    return w.window ? `<div class="tl-note">${escapeHtml(w.window)}</div>` : '<div class="tl-note">Nog geen drinkvenster. Vul het in via Bewerken.</div>';
+  }
+  const { from, to, now, vintage, pct, cls } = d;
+  const edge = p => p <= 4 ? ' start' : p >= 96 ? ' end' : '';
+  // Jaartallen boven de as; labels die te dicht op elkaar vallen laten we weg
+  const labels = [];
+  const add = (y, extra) => { const p = pct(y); if (labels.every(l => Math.abs(l.p - p) >= 11)) labels.push({ y, p, extra }); };
+  add(from, ' win'); add(to, ' win');
+  if (vintage) add(vintage, '');
+  const years = labels.map(l => `<span class="dw-year${l.extra}${edge(l.p)}" style="left:${l.p}%">${l.y}</span>`).join('');
+  const ticks = [vintage, from, to].filter(Boolean).map(y => `<span class="dw-tick" style="left:${pct(y)}%"></span>`).join('');
+  const np = pct(now);
+  let sum;
+  if (cls === 'wait') sum = `Nog ${plural(from - now, 'jaar', 'jaar')} wachten · drinken ${from}–${to}`;
+  else if (cls === 'past') sum = `Over de top sinds ${to + 1} · venster was ${from}–${to}`;
+  else sum = now === to ? `Laatste jaar van het drinkvenster (${from}–${to})` : `Op dronk · nog ${plural(to - now, 'jaar', 'jaar')} (tot ${to})`;
+  return `<div class="dw ${cls}" role="img" aria-label="Jaargang ${w.year || 'onbekend'}, drinkvenster ${from} tot ${to}, nu ${now}">
+      <div class="dw-axis">
+        <div class="dw-line"></div>
+        <div class="dw-band" style="left:${pct(from)}%;width:${pct(to) - pct(from)}%"></div>
+        ${ticks}${years}
+        <div class="dw-now${edge(np)}" style="left:${np}%"><span class="arrow">▲</span><span class="txt">nu ${now}</span></div>
       </div>
-      <div class="tl-label"><span style="left:${pos}%">${label}</span></div>
     </div>
+    <div class="dw-sum ${cls}" style="color:var(--${cls === 'past' ? 'drunk' : cls})">${sum}</div>
     ${w.window && !/^\s*[\d\s\-–tovanaf]+\s*$/i.test(w.window) ? `<div class="tl-note">${escapeHtml(w.window)}</div>` : ''}`;
+}
+
+// Smalle tijdlijn onderaan een kaart: band = drinkvenster, streepje = nu
+function miniTimelineHtml(w) {
+  if (w.drunk) return '';
+  const d = windowData(w);
+  if (!d) return '';
+  const { from, to, now, pct, cls } = d;
+  return `<div class="dw-mini ${cls}" title="Drinkvenster ${from}–${to}, nu ${now}">
+      <div class="dw-axis"><div class="dw-line"></div><div class="dw-band" style="left:${pct(from)}%;width:${pct(to) - pct(from)}%"></div><span class="dw-pin" style="left:${pct(now)}%"></span></div>
+      <span>${from}–${to}</span>
+    </div>`;
 }
 
 function openDetailModal(id) {
@@ -1377,6 +1434,7 @@ function cardHtml(w) {
         <span>📍 ${loc ? escapeHtml(loc) : '<span class="meta-empty">geen locatie</span>'}</span>
         ${hasPrice(w) ? `<span title="Marktprijs per fles${w.marketNote ? ': ' + escapeHtml(w.marketNote) : ''}">💶 ≈ ${fmtEuro0(w.marketPrice)}</span>` : ''}
       </div>
+      ${miniTimelineHtml(w)}
     </div>
     <div class="actions">
       ${w.drunk ? '' : `<span class="stepper" role="group" aria-label="Voorraad">
