@@ -534,6 +534,12 @@
   .spinner { width: 18px; height: 18px; border-radius: 50%; border: 3px solid var(--border); border-top-color: var(--accent); animation: spin 0.8s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
   .scan-ok { background: var(--now-bg); color: var(--text); border-radius: 10px; padding: 10px 12px; font-size: 0.86rem; margin-top: 8px; }
+  .scan-banner { background: var(--now-bg); border-radius: 10px; padding: 10px 12px; font-size: 0.86rem; margin: 0 0 12px; clear: both; }
+  .scan-banner .confirm-actions { margin-top: 8px; }
+  .scan-wait { position: fixed; inset: 0; z-index: 300; display: none; align-items: center; justify-content: center; background: rgba(0,0,0,0.45); padding: 16px; }
+  .scan-wait.open { display: flex; }
+  .scan-wait .box { background: var(--card-bg, #fff); color: var(--text); border-radius: 14px; padding: 16px 18px; max-width: 360px; width: 100%; box-shadow: 0 10px 30px rgba(0,0,0,0.25); }
+  .scan-wait .notice { background: var(--soon-bg); color: var(--soon); border-radius: 10px; padding: 10px 12px; font-size: 0.86rem; }
   .scan-dup { border: 1px solid var(--soon); border-radius: 10px; padding: 10px 12px; font-size: 0.86rem; margin-top: 8px; }
   .photo-row { display: flex; gap: 12px; align-items: center; }
   .photo-prev {
@@ -597,6 +603,8 @@
     </div>
     <div class="header-actions">
       <button class="add-btn ghost" id="historyBtn" aria-pressed="false" type="button">📊 Historie</button>
+      <label class="add-btn" id="quickScanBtn" for="quickScanInput" role="button" tabindex="0" aria-label="Wijn scannen">📷<span class="add-label"> Scan</span></label>
+      <input id="quickScanInput" type="file" accept="image/*" capture="environment" hidden>
       <button class="add-btn" id="openAddBtn" aria-label="Wijn toevoegen" type="button">+<span class="add-label"> Wijn toevoegen</span></button>
     </div>
   </div>
@@ -670,6 +678,9 @@
   <button data-nav="choose" type="button"><span class="ico" aria-hidden="true">🎲</span>Kiezen</button>
   <button data-nav="history" type="button"><span class="ico" aria-hidden="true">📊</span>Historie</button>
 </nav>
+
+<!-- Snel scannen: wachten / foutmelding -->
+<div class="scan-wait" id="scanWait"><div class="box" role="status" aria-live="polite" id="scanWaitBox"></div></div>
 
 <!-- Toevoegen -->
 <div class="modal-overlay" id="addModalOverlay">
@@ -1376,7 +1387,7 @@ function miniTimelineHtml(w) {
     </div>`;
 }
 
-function openDetailModal(id) {
+function openDetailModal(id, scan) {
   const w = wines.find(x => String(x.id) === String(id));
   if (!w) return;
   const color = colorOf(w);
@@ -1391,6 +1402,8 @@ function openDetailModal(id) {
 
   document.getElementById('detailModalBox').innerHTML = `
     <button class="modal-close" data-close="detailModalOverlay" aria-label="Sluiten" type="button">✕</button>
+    ${scan ? `<div class="scan-banner">📷 <strong>Gescand: deze wijn staat al in je kelder.</strong>
+      <div class="confirm-actions"><button class="btn save-fill" data-dv="scanplus" type="button">+1 fles bijtellen</button></div></div>` : ''}
     <div class="dv">
       ${etiketHtml(w)}
       <h3 class="dv-name">${escapeHtml(w.name)}</h3>
@@ -1453,6 +1466,17 @@ function openDetailModal(id) {
       if (act === 'undrunk') {
         await patchWine(w.id, { drunk: false });
         showToast(`'${w.name}' teruggezet naar voorraad.`);
+      }
+      if (act === 'scanplus') {
+        await patchWine(w.id, w.drunk ? { drunk: false, qty: 1 } : { qty: (w.qty || 1) + 1 });
+        // Nog geen etiketfoto? Dan de scanfoto gebruiken.
+        if (!w.image && scan && scan.blob) {
+          const fd = new FormData(); fd.append('id', w.id); fd.append('photo', scan.blob, 'etiket.jpg');
+          await fetch(UPLOAD_URL, { method: 'POST', body: fd }).catch(() => {});
+        }
+        await loadWines(); render();
+        showToast(`Fles bijgeteld bij '${w.name}'.`);
+        return openDetailModal(w.id);
       }
       document.getElementById('detailModalOverlay').classList.remove('open');
       await loadWines();
@@ -1759,6 +1783,31 @@ function fillFromScan(sw) {
     setField('f_mnote', maand + ' · schatting (etiketscan)');
   }
 }
+// Etiket naar Gemini sturen. Geeft { blob, sw } terug, of gooit een Error met een leesbare melding.
+async function scanLabel(file) {
+  let blob;
+  try { blob = await shrinkImage(file); } catch (e) { throw Object.assign(new Error('Foto kon niet worden gelezen.'), { retry: false }); }
+  const fd = new FormData();
+  fd.append('photo', blob, 'etiket.jpg');
+  let res, j;
+  try {
+    res = await fetch(SCAN_URL, { method: 'POST', body: fd });
+    j = await res.json().catch(() => ({}));
+  } catch (e) { throw Object.assign(new Error('Scannen mislukt. Controleer je verbinding en probeer opnieuw.'), { retry: true, blob }); }
+  if (!res.ok) {
+    if (j.error === 'not_configured') throw Object.assign(new Error('Scannen is nog niet ingesteld. Zet je Gemini-sleutel in <code>api/config.php</code>.'), { retry: false, html: true });
+    throw Object.assign(new Error(j.error || 'Scannen mislukt. Probeer een scherpere foto.'), { retry: true, blob });
+  }
+  return { blob, sw: j.wine || {} };
+}
+// Precies dezelfde wijn: zelfde producent + naam, én zelfde jaargang en flesformaat
+function findExact(sw) {
+  const found = findExisting(sw);
+  if (!found) return null;
+  const sameYear = !sw.year || String(found.year) === String(sw.year);
+  const sameSize = sizeOf(found) === (SIZES[sw.size] ? Number(sw.size) : 750);
+  return sameYear && sameSize ? found : null;
+}
 async function runScan(file) {
   const box = document.getElementById('scanResult');
   scanState.file = file;
@@ -1766,20 +1815,18 @@ async function runScan(file) {
   // Bij een mislukte scan: knop om dezelfde foto opnieuw te versturen
   const retry = `<div class="confirm-actions" style="margin-top:8px"><button class="btn save-fill" data-scan-retry type="button">↻ Opnieuw scannen</button><label class="btn" for="scanInput">📷 Nieuwe foto</label></div>`;
   try {
-    const blob = await shrinkImage(file);
+    const { blob, sw } = await scanLabel(file);
+    showScanResult(blob, sw);
+  } catch (err) {
+    box.innerHTML = `<div class="notice">${err.html ? err.message : escapeHtml(err.message)}</div>${err.retry === false ? '' : retry}`;
+  }
+}
+// Gescande gegevens in het toevoegformulier zetten en tonen wat er herkend is
+function showScanResult(blob, sw) {
+  const box = document.getElementById('scanResult');
+  {
     scanState.blob = blob;
     document.getElementById('f_prev').innerHTML = `<img src="${URL.createObjectURL(blob)}" alt="">`;
-    const fd = new FormData();
-    fd.append('photo', blob, 'etiket.jpg');
-    const res = await fetch(SCAN_URL, { method: 'POST', body: fd });
-    const j = await res.json().catch(() => ({}));
-    if (!res.ok) {
-      box.innerHTML = `<div class="notice">${j.error === 'not_configured'
-        ? 'Scannen is nog niet ingesteld. Zet je Gemini-sleutel in <code>api/config.php</code>.'
-        : escapeHtml(j.error || 'Scannen mislukt. Probeer een scherpere foto.')}</div>${j.error === 'not_configured' ? '' : retry}`;
-      return;
-    }
-    const sw = j.wine || {};
     fillFromScan(sw);
     const found = findExisting(sw);
     const conf = { high: 'zeker', medium: 'redelijk zeker', low: 'onzeker — controleer de velden' }[sw.confidence] || '';
@@ -1790,7 +1837,7 @@ async function runScan(file) {
       const sameSize = sizeOf(found) === scanSize;
       const canAdd = sameYear && sameSize;
       html += `<div class="scan-dup">
-        <div><strong>Deze wijn staat al in je kelder:</strong> ${escapeHtml(found.name)}${found.year ? ' ' + found.year : ''} · ${found.drunk ? 'opgedronken' : plural(found.qty || 1, 'fles', 'flessen')}${locText(found) ? ' · 📍 ' + escapeHtml(locText(found)) : ''}${sizeShort(found) ? ' · ' + sizeShort(found) : ''}${sameYear ? '' : ` <span class="hint">(andere jaargang: gescand ${sw.year})</span>`}${sameSize ? '' : ` <span class="hint">(ander formaat: gescand ${escapeHtml(SIZES[scanSize])})</span>`}</div>
+        <div><strong>${canAdd ? 'Deze wijn staat al in je kelder:' : 'Je hebt al een andere jaargang of formaat van deze wijn:'}</strong> ${escapeHtml(found.name)}${found.year ? ' ' + found.year : ''} · ${found.drunk ? 'opgedronken' : plural(found.qty || 1, 'fles', 'flessen')}${locText(found) ? ' · 📍 ' + escapeHtml(locText(found)) : ''}${sizeShort(found) ? ' · ' + sizeShort(found) : ''}${sameYear ? '' : ` <span class="hint">(andere jaargang: gescand ${sw.year})</span>`}${sameSize ? '' : ` <span class="hint">(ander formaat: gescand ${escapeHtml(SIZES[scanSize])})</span>`}</div>
         <div class="confirm-actions" style="margin-top:10px">
           <button class="btn" data-scan-open="${found.id}" type="button">Details</button>
           ${canAdd ? `<button class="btn save-fill" data-scan-plus="${found.id}" type="button">+1 fles bij bestaande</button>` : ''}
@@ -1798,10 +1845,52 @@ async function runScan(file) {
       </div>`;
     }
     box.innerHTML = html;
-  } catch (err) {
-    box.innerHTML = '<div class="notice">Scannen mislukt. Controleer je verbinding en probeer opnieuw.</div>' + retry;
   }
 }
+
+/* ---------- snel scannen vanaf het hoofdscherm ---------- */
+// Bekende wijn → details (met +1 fles). Onbekend, of andere jaargang/formaat → ingevuld toevoegformulier.
+const quickScan = { file: null };
+function scanWait(html) {
+  const o = document.getElementById('scanWait');
+  if (html === null) { o.classList.remove('open'); return; }
+  document.getElementById('scanWaitBox').innerHTML = html;
+  o.classList.add('open');
+}
+async function runQuickScan(file) {
+  quickScan.file = file;
+  scanWait('<div class="scan-busy"><span class="spinner" aria-hidden="true"></span> Etiket wordt gelezen…</div>');
+  try {
+    const { blob, sw } = await scanLabel(file);
+    scanWait(null);
+    const exact = findExact(sw);
+    if (exact) return openDetailModal(exact.id, { blob, sw });
+    openAddModal();
+    const single = document.querySelector('#addModalOverlay .tab[data-tab="single"]');
+    if (single) single.click();
+    scanState.file = file;
+    showScanResult(blob, sw);
+  } catch (err) {
+    scanWait(`<div class="notice">${err.html ? err.message : escapeHtml(err.message)}</div>
+      <div class="confirm-actions" style="margin-top:10px">
+        ${err.retry === false ? '' : '<button class="btn save-fill" data-qscan="retry" type="button">↻ Opnieuw</button><label class="btn" for="quickScanInput">📷 Nieuwe foto</label>'}
+        <button class="btn" data-qscan="close" type="button">Sluiten</button>
+      </div>`);
+  }
+}
+document.getElementById('scanWait').addEventListener('click', e => {
+  const b = e.target.closest('[data-qscan]');
+  if (b && b.dataset.qscan === 'retry' && quickScan.file) return runQuickScan(quickScan.file);
+  if ((b && b.dataset.qscan === 'close') || e.target.id === 'scanWait') scanWait(null);
+  if (e.target.closest('label[for="quickScanInput"]')) scanWait(null);
+});
+document.getElementById('quickScanInput').addEventListener('change', e => {
+  if (e.target.files[0]) runQuickScan(e.target.files[0]);
+  e.target.value = '';
+});
+document.getElementById('quickScanBtn').addEventListener('keydown', e => {
+  if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); document.getElementById('quickScanInput').click(); }
+});
 document.getElementById('addModalOverlay').addEventListener('click', async e => {
   if (e.target.closest('[data-scan-retry]') && scanState.file) return runScan(scanState.file);
   const o = e.target.closest('[data-scan-open]');
