@@ -161,6 +161,17 @@
   .chip.active { background: var(--accent); border-color: var(--accent); color: #fff; }
   .chip.flag { font-size: 1rem; padding: 3px 10px; }
   .chip-spacer { flex: 1; }
+  .flag-row { display: flex; gap: 6px; flex-wrap: nowrap; min-width: 0; max-width: 100%; overflow-x: auto; scrollbar-width: none; }
+  .flag-row::-webkit-scrollbar { display: none; }
+  .flag-row .chip { flex: none; }
+  .chip-row .filters-btn { margin-left: auto; }
+  .status-row { display: flex; gap: 6px; flex-wrap: nowrap; max-width: 100%; }
+  .status-row .chip { flex: none; }
+  .chip-row { flex-direction: column; align-items: stretch; }
+  .chip-line { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  @media (max-width: 480px) { .status-row { gap: 4px; } .status-row .chip { padding-left: 9px; padding-right: 9px; } }
+  @media (max-width: 380px) { .status-row .chip { padding-left: 7px; padding-right: 7px; font-size: 0.76rem; } }
+  @media (max-width: 480px) { .flag-row { gap: 4px; } .flag-row .chip.flag { padding: 3px 7px; } }
   .filters-btn { display: inline-flex; align-items: center; gap: 5px; }
   select.sort, .filter-grid select {
     border: 1px solid var(--border); background: var(--card-bg); color: var(--text);
@@ -1083,15 +1094,22 @@ function renderChips() {
   const chip = (attrs, label, active, cls = '') =>
     `<button class="chip${cls}${active ? ' active' : ''}" ${attrs} aria-pressed="${active}" type="button">${label}</button>`;
   const html = [
-    chip('data-chip="all"', 'Alle', isAll),
-    chip('data-chip="status" data-v="now"', 'Nu drinken', state.status === 'now'),
-    chip('data-chip="status" data-v="soon"', 'Binnenkort', state.status === 'soon'),
-    ...(wines.some(w => !w.drunk && w.status === 'past') ? [chip('data-chip="status" data-v="past"', 'Over de top', state.status === 'past')] : []),
+    // Regel 1: Alle + statussen (in volgorde van urgentie) en kleuren
+    '<div class="chip-line">',
+    `<span class="status-row" role="group" aria-label="Status">${[
+      chip('data-chip="all"', 'Alle', isAll),
+      chip('data-chip="status" data-v="past"', 'Over de top', state.status === 'past'),
+      chip('data-chip="status" data-v="now"', 'Nu drinken', state.status === 'now'),
+      chip('data-chip="status" data-v="soon"', 'Binnenkort', state.status === 'soon')
+    ].join('')}</span>`,
     chip('data-chip="color" data-v="rood"', 'Rood', state.color === 'rood'),
     chip('data-chip="color" data-v="wit"', 'Wit', state.color === 'wit'),
-    ...cellarCountries().map(c => chip(`data-chip="country" data-v="${c}" title="${escapeHtml(COUNTRIES[c] || c)}" aria-label="${escapeHtml(COUNTRIES[c] || c)}"`, flag(c), state.country === c, ' flag')),
+    '</div><div class="chip-line">',
+    // Regel 2: vlaggen als één groep op één regel (bij te weinig ruimte horizontaal scrollen)
+    `<span class="flag-row" role="group" aria-label="Land">${cellarCountries().map(c => chip(`data-chip="country" data-v="${c}" title="${escapeHtml(COUNTRIES[c] || c)}" aria-label="${escapeHtml(COUNTRIES[c] || c)}"`, flag(c), state.country === c, ' flag')).join('')}</span>`,
     '<span class="chip-spacer"></span>',
-    `<button class="chip filters-btn${state.filtersOpen ? ' active' : ''}" id="filtersBtn" aria-expanded="${state.filtersOpen}" aria-controls="filterGrid" type="button">⚙ Filters</button>`
+    `<button class="chip filters-btn${state.filtersOpen ? ' active' : ''}" id="filtersBtn" aria-expanded="${state.filtersOpen}" aria-controls="filterGrid" type="button">⚙ Filters</button>`,
+    '</div>'
   ];
   document.getElementById('chipRow').innerHTML = html.join('');
   document.getElementById('filterGrid').classList.toggle('open', state.filtersOpen);
