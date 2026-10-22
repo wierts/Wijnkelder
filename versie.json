@@ -1,7 +1,20 @@
 {
-  "versie": "1.23.0",
+  "versie": "2.0.0",
   "datum": "2026-10-22",
   "geschiedenis": [
+    {
+      "versie": "2.0.0",
+      "datum": "2026-10-22",
+      "soort": "verbetering",
+      "omschrijving": "Nieuwe huisstijl in de lijn van de facturen-app: lettertype Overpass, rustige kopbalk, vlakke kaarten met statuskleur; bordeaux ook in donkere modus (was roze op iPad)",
+      "commits": [
+        {
+          "hash": "",
+          "datum": "2026-10-22",
+          "titel": "Nieuwe huisstijl (deze versie)"
+        }
+      ]
+    },
     {
       "versie": "1.23.0",
       "datum": "2026-10-22",
@@ -9,9 +22,9 @@
       "omschrijving": "Versiebeheer: versienummer in de kopbalk met overzicht van alle wijzigingen",
       "commits": [
         {
-          "hash": "",
-          "datum": "2026-10-22",
-          "titel": "Versiebeheer (deze versie)"
+          "hash": "b5c1f91",
+          "datum": "2026-10-22 14:26",
+          "titel": "Versiebeheer"
         }
       ]
     },
