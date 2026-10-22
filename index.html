@@ -104,6 +104,21 @@
   .add-btn.ghost:hover, .add-btn.ghost[aria-pressed="true"] { background: rgba(255,255,255,0.16); }
   .header-actions { display: flex; gap: 6px; align-items: center; }
   .head-counts { display: flex; flex-wrap: wrap; gap: 4px 0; }
+  /* Versienummer in de kopbalk; klik opent het wijzigingsoverzicht */
+  .ver-btn { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size: 0.66rem; font-weight: 600; letter-spacing: 0.02em;
+    color: #fff; background: rgba(255,255,255,0.16); border: 1px solid rgba(255,255,255,0.28); border-radius: 999px;
+    padding: 2px 8px; margin-left: 6px; vertical-align: middle; cursor: pointer; }
+  .ver-btn:hover { background: rgba(255,255,255,0.26); }
+  .ver-list { margin-top: 10px; }
+  .ver-item { padding: 10px 0; border-top: 1px solid var(--border); }
+  .ver-item:first-child { border-top: none; }
+  .ver-top { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+  .ver-nr { font-weight: 700; }
+  .ver-date { font-size: 0.78rem; color: var(--text-dim); }
+  .ver-kind { font-size: 0.68rem; font-weight: 700; border-radius: 999px; padding: 1px 8px; background: var(--drunk-bg); color: var(--drunk); }
+  .ver-kind.verbetering { background: var(--now-bg); color: var(--now); }
+  .ver-kind.fix { background: var(--soon-bg); color: var(--soon); }
+  .ver-desc { font-size: 0.86rem; margin-top: 3px; line-height: 1.4; }
   .head-counts span + span::before { content: "|"; opacity: 0.55; margin: 0 8px; }
 
   .container { max-width: 760px; margin: 0 auto; padding: 16px 16px 48px; }
@@ -604,7 +619,7 @@
 <header>
   <div class="header-inner">
     <div>
-      <h1>🍷 Mijn Wijnkelder</h1>
+      <h1>🍷 Mijn Wijnkelder<button class="ver-btn" id="verBtn" type="button" hidden aria-label="Versie en wijzigingen"></button></h1>
       <div class="subtitle" id="headerCount">Laden…</div>
     </div>
     <div class="header-actions">
@@ -752,6 +767,9 @@
 <div class="modal-overlay" id="drinkModalOverlay">
   <div class="modal-box" id="drinkModalBox" role="dialog" aria-modal="true" aria-label="Fles opgedronken"></div>
 </div>
+
+<!-- Versies -->
+<div class="modal-overlay" id="versionModalOverlay"><div class="modal-box" id="versionModalBox" role="dialog" aria-modal="true" aria-label="Versies"></div></div>
 
 <div id="toast" role="status" aria-live="polite"></div>
 
@@ -2275,6 +2293,37 @@ document.querySelectorAll('.modal-overlay').forEach(overlay => overlay.addEventL
   if (e.target === overlay) overlay.classList.remove('open');
   else if (closer) document.getElementById(closer.dataset.close).classList.remove('open');
 }));
+
+/* ---------- versie ---------- */
+// versie.json staat naast index.html en wordt bij elke wijziging bijgewerkt (zie skill wijnkelder-app-ontwikkeling).
+let versionInfo = null;
+const fmtDateNum = d => d ? d.slice(0, 10).split('-').reverse().join('-') : '';
+async function loadVersion() {
+  try {
+    const res = await fetch('versie.json?t=' + Date.now(), { cache: 'no-store' });
+    if (!res.ok) return;
+    versionInfo = await res.json();
+    const b = document.getElementById('verBtn');
+    b.textContent = 'v' + versionInfo.versie;
+    b.hidden = false;
+  } catch (err) { /* geen versie tonen */ }
+}
+function openVersionModal() {
+  if (!versionInfo) return;
+  const kinds = { verbetering: 'Verbetering', fix: 'Fix', onderhoud: 'Onderhoud' };
+  document.getElementById('versionModalBox').innerHTML = `
+    <button class="modal-close" data-close="versionModalOverlay" aria-label="Sluiten" type="button">✕</button>
+    <h3>Versie ${escapeHtml(versionInfo.versie)}</h3>
+    <div class="modal-region">Bijgewerkt op ${fmtDateNum(versionInfo.datum)}</div>
+    <div class="ver-list">${(versionInfo.geschiedenis || []).map(v => `
+      <div class="ver-item">
+        <div class="ver-top"><span class="ver-nr">v${escapeHtml(v.versie)}</span><span class="ver-date">${fmtDateNum(v.datum)}</span><span class="ver-kind ${escapeHtml(v.soort)}">${kinds[v.soort] || escapeHtml(v.soort)}</span></div>
+        <div class="ver-desc">${escapeHtml(v.omschrijving)}</div>
+      </div>`).join('')}</div>`;
+  document.getElementById('versionModalOverlay').classList.add('open');
+}
+document.getElementById('verBtn').addEventListener('click', openVersionModal);
+loadVersion();
 
 /* ---------- feedback ---------- */
 let toastTimer = null;

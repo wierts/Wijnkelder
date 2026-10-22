@@ -1,0 +1,357 @@
+{
+  "versie": "1.23.0",
+  "datum": "2026-10-22",
+  "geschiedenis": [
+    {
+      "versie": "1.23.0",
+      "datum": "2026-10-22",
+      "soort": "verbetering",
+      "omschrijving": "Versiebeheer: versienummer in de kopbalk met overzicht van alle wijzigingen",
+      "commits": [
+        {
+          "hash": "",
+          "datum": "2026-10-22",
+          "titel": "Versiebeheer (deze versie)"
+        }
+      ]
+    },
+    {
+      "versie": "1.22.0",
+      "datum": "2026-10-22",
+      "soort": "verbetering",
+      "omschrijving": "Status volgt automatisch het drinkvenster; nieuwe status Over de top",
+      "commits": [
+        {
+          "hash": "2f9b25c",
+          "datum": "2026-10-22 14:25",
+          "titel": "Status volgt automatisch het drinkvenster; nieuwe status Over de top"
+        }
+      ]
+    },
+    {
+      "versie": "1.21.0",
+      "datum": "2026-10-12",
+      "soort": "verbetering",
+      "omschrijving": "Snel scannen vanuit de kopbalk; herkent een wijn die al in de kelder staat",
+      "commits": [
+        {
+          "hash": "3866d85",
+          "datum": "2026-10-12 13:48",
+          "titel": "Snel scannen vanuit de kopbalk; herkent een wijn die al in de kelder staat"
+        }
+      ]
+    },
+    {
+      "versie": "1.20.0",
+      "datum": "2026-09-23",
+      "soort": "verbetering",
+      "omschrijving": "Land afgeleid uit de regio; waarschuwing bij dubbele wijn",
+      "commits": [
+        {
+          "hash": "10e6155",
+          "datum": "2026-09-23 19:42",
+          "titel": "Land afgeleid uit de regio; waarschuwing bij dubbele wijn"
+        }
+      ]
+    },
+    {
+      "versie": "1.19.0",
+      "datum": "2026-09-23",
+      "soort": "verbetering",
+      "omschrijving": "Cyprus toegevoegd; landfilters vullen zich automatisch",
+      "commits": [
+        {
+          "hash": "ac122f4",
+          "datum": "2026-09-23 19:38",
+          "titel": "Cyprus toegevoegd; landfilters vullen zich automatisch"
+        }
+      ]
+    },
+    {
+      "versie": "1.18.0",
+      "datum": "2026-09-23",
+      "soort": "verbetering",
+      "omschrijving": "Eén keer inloggen per apparaat",
+      "commits": [
+        {
+          "hash": "b2a5566",
+          "datum": "2026-09-23 15:46",
+          "titel": "Eén keer inloggen per apparaat"
+        }
+      ]
+    },
+    {
+      "versie": "1.17.0",
+      "datum": "2026-09-23",
+      "soort": "verbetering",
+      "omschrijving": "Flesformaat (halve fles, magnum enz.)",
+      "commits": [
+        {
+          "hash": "04d7780",
+          "datum": "2026-09-23 15:25",
+          "titel": "Flesformaat (halve fles, magnum enz.)"
+        }
+      ]
+    },
+    {
+      "versie": "1.16.0",
+      "datum": "2026-09-23",
+      "soort": "verbetering",
+      "omschrijving": "Scan opnieuw proberen na een fout",
+      "commits": [
+        {
+          "hash": "57a8a55",
+          "datum": "2026-09-23 15:07",
+          "titel": "Scan opnieuw proberen na een fout"
+        }
+      ]
+    },
+    {
+      "versie": "1.15.0",
+      "datum": "2026-09-23",
+      "soort": "verbetering",
+      "omschrijving": "Drinkvenster-tijdlijn op de kaart en in het detailvenster",
+      "commits": [
+        {
+          "hash": "5e03941",
+          "datum": "2026-09-23 15:04",
+          "titel": "Drinkvenster-tijdlijn op de kaart en in het detailvenster"
+        }
+      ]
+    },
+    {
+      "versie": "1.14.0",
+      "datum": "2026-09-23",
+      "soort": "verbetering",
+      "omschrijving": "Etiket scannen met Gemini",
+      "commits": [
+        {
+          "hash": "2b15a5b",
+          "datum": "2026-09-23 14:39",
+          "titel": "Etiket scannen met Gemini"
+        }
+      ]
+    },
+    {
+      "versie": "1.13.1",
+      "datum": "2026-09-23",
+      "soort": "onderhoud",
+      "omschrijving": "Eenmalige vulscripts verwijderd",
+      "commits": [
+        {
+          "hash": "b17f531",
+          "datum": "2026-09-23 13:56",
+          "titel": "Eenmalige vulscripts verwijderd"
+        }
+      ]
+    },
+    {
+      "versie": "1.13.0",
+      "datum": "2026-09-23",
+      "soort": "verbetering",
+      "omschrijving": "Kelderwaarde op basis van marktprijs",
+      "commits": [
+        {
+          "hash": "6e26f43",
+          "datum": "2026-09-23 12:56",
+          "titel": "Kelderwaarde op basis van marktprijs"
+        }
+      ]
+    },
+    {
+      "versie": "1.12.0",
+      "datum": "2026-09-23",
+      "soort": "verbetering",
+      "omschrijving": "Drinkhistorie, etiketfoto's en marktprijzen",
+      "commits": [
+        {
+          "hash": "cbb400a",
+          "datum": "2026-09-23 12:49",
+          "titel": "Drinkhistorie, etiketfoto's en marktprijzen"
+        }
+      ]
+    },
+    {
+      "versie": "1.11.0",
+      "datum": "2026-09-23",
+      "soort": "verbetering",
+      "omschrijving": "Detailvenster met drinkvenster, aankoopgegevens en notities",
+      "commits": [
+        {
+          "hash": "2c2e444",
+          "datum": "2026-09-23 12:17",
+          "titel": "Detailvenster met drinkvenster, aankoopgegevens en notities"
+        }
+      ]
+    },
+    {
+      "versie": "1.10.0",
+      "datum": "2026-09-23",
+      "soort": "verbetering",
+      "omschrijving": "Nieuwe wijnkaarten (etiket links, status rechtsboven)",
+      "commits": [
+        {
+          "hash": "1fe6a89",
+          "datum": "2026-09-23 12:02",
+          "titel": "Nieuwe wijnkaarten (etiket links, status rechtsboven)"
+        }
+      ]
+    },
+    {
+      "versie": "1.9.0",
+      "datum": "2026-09-23",
+      "soort": "verbetering",
+      "omschrijving": "Meer gerechten bij Wijn bij gerecht, met terugvaloptie",
+      "commits": [
+        {
+          "hash": "9ad8998",
+          "datum": "2026-09-23 11:24",
+          "titel": "Meer gerechten bij Wijn bij gerecht, met terugvaloptie"
+        }
+      ]
+    },
+    {
+      "versie": "1.8.0",
+      "datum": "2026-09-23",
+      "soort": "verbetering",
+      "omschrijving": "Wijn bewerken",
+      "commits": [
+        {
+          "hash": "4369fd3",
+          "datum": "2026-09-23 11:06",
+          "titel": "Wijn bewerken"
+        }
+      ]
+    },
+    {
+      "versie": "1.7.0",
+      "datum": "2026-09-22",
+      "soort": "verbetering",
+      "omschrijving": "Nieuwe kelderweergave met kelderlocatie, filters en Verras me",
+      "commits": [
+        {
+          "hash": "e2e49de",
+          "datum": "2026-09-22 21:17",
+          "titel": "Nieuwe kelderweergave met kelderlocatie, filters en Verras me"
+        }
+      ]
+    },
+    {
+      "versie": "1.6.0",
+      "datum": "2026-09-22",
+      "soort": "verbetering",
+      "omschrijving": "Als app op het iPhone-beginscherm; achtergrond scrolt mee",
+      "commits": [
+        {
+          "hash": "1af1a20",
+          "datum": "2026-09-22 20:37",
+          "titel": "Als app op het iPhone-beginscherm; achtergrond scrolt mee"
+        }
+      ]
+    },
+    {
+      "versie": "1.5.0",
+      "datum": "2026-09-22",
+      "soort": "verbetering",
+      "omschrijving": "Achtergrondfoto van de wijnkelder",
+      "commits": [
+        {
+          "hash": "0117fcc",
+          "datum": "2026-09-22 20:29",
+          "titel": "Achtergrondfoto van de wijnkelder"
+        }
+      ]
+    },
+    {
+      "versie": "1.4.0",
+      "datum": "2026-09-22",
+      "soort": "verbetering",
+      "omschrijving": "Producent en wijnnaam gesplitst; venster met info over de producent",
+      "commits": [
+        {
+          "hash": "024998f",
+          "datum": "2026-09-22 18:02",
+          "titel": "Producent en wijnnaam gesplitst; venster met info over de producent"
+        }
+      ]
+    },
+    {
+      "versie": "1.3.0",
+      "datum": "2026-09-22",
+      "soort": "verbetering",
+      "omschrijving": "Aantal flessen, wijn bij gerecht en meerdere flessen plakken",
+      "commits": [
+        {
+          "hash": "4a8b21a",
+          "datum": "2026-09-22 19:52",
+          "titel": "Aantal flessen, wijn bij gerecht en meerdere flessen plakken"
+        }
+      ]
+    },
+    {
+      "versie": "1.2.1",
+      "datum": "2026-09-22",
+      "soort": "onderhoud",
+      "omschrijving": "Systeembestand (.DS_Store) toegevoegd",
+      "commits": [
+        {
+          "hash": "6762e3a",
+          "datum": "2026-09-22 19:37",
+          "titel": "Systeembestand (.DS_Store) toegevoegd"
+        }
+      ]
+    },
+    {
+      "versie": "1.2.0",
+      "datum": "2026-09-22",
+      "soort": "verbetering",
+      "omschrijving": "Overstap naar eigen database (PHP + MySQL)",
+      "commits": [
+        {
+          "hash": "37cbedc",
+          "datum": "2026-09-22 19:31",
+          "titel": "Overstap naar eigen database (PHP + MySQL)"
+        }
+      ]
+    },
+    {
+      "versie": "1.1.0",
+      "datum": "2026-09-22",
+      "soort": "verbetering",
+      "omschrijving": "Karakter en serveertips met uitklapbaar detailpaneel",
+      "commits": [
+        {
+          "hash": "dbf6f1e",
+          "datum": "2026-09-22 19:16",
+          "titel": "Karakter en serveertips met uitklapbaar detailpaneel"
+        }
+      ]
+    },
+    {
+      "versie": "1.0.0",
+      "datum": "2026-09-22",
+      "soort": "verbetering",
+      "omschrijving": "Eerste versie: webapp (index.html) en Firebase-versie (wijn.html)",
+      "commits": [
+        {
+          "hash": "d68bc95",
+          "datum": "2026-09-22 18:48",
+          "titel": "Eerste versie: webapp (index.html) en Firebase-versie (wijn.html)"
+        }
+      ]
+    },
+    {
+      "versie": "0.1.0",
+      "datum": "2026-09-22",
+      "soort": "onderhoud",
+      "omschrijving": "Repository aangemaakt",
+      "commits": [
+        {
+          "hash": "a27bda1",
+          "datum": "2026-09-22 17:53",
+          "titel": "Repository aangemaakt"
+        }
+      ]
+    }
+  ]
+}
