@@ -1,7 +1,33 @@
 {
-  "versie": "2.0.0",
+  "versie": "2.1.1",
   "datum": "2026-10-22",
   "geschiedenis": [
+    {
+      "versie": "2.1.1",
+      "datum": "2026-10-22",
+      "soort": "fix",
+      "omschrijving": "Sortering Eerst drinken staat nu echt in de app (ontbrak in v2.1.0)",
+      "commits": [
+        {
+          "hash": "",
+          "datum": "2026-10-22",
+          "titel": "Sortering Eerst drinken toegevoegd (deze versie)"
+        }
+      ]
+    },
+    {
+      "versie": "2.1.0",
+      "datum": "2026-10-22",
+      "soort": "verbetering",
+      "omschrijving": "Standaard sortering Eerst drinken: over de top en bijna aflopende wijnen bovenaan",
+      "commits": [
+        {
+          "hash": "ea12c0f",
+          "datum": "2026-10-22 14:33",
+          "titel": "Sortering Eerst drinken (ontbrak door een synchronisatiefout; zie v2.1.1)"
+        }
+      ]
+    },
     {
       "versie": "2.0.0",
       "datum": "2026-10-22",
@@ -9,9 +35,14 @@
       "omschrijving": "Nieuwe huisstijl in de lijn van de facturen-app: lettertype Overpass, rustige kopbalk, vlakke kaarten met statuskleur; bordeaux ook in donkere modus (was roze op iPad)",
       "commits": [
         {
-          "hash": "",
-          "datum": "2026-10-22",
-          "titel": "Nieuwe huisstijl (deze versie)"
+          "hash": "5ba84a5",
+          "datum": "2026-10-22 14:31",
+          "titel": "Lettertype Overpass toegevoegd"
+        },
+        {
+          "hash": "ea12c0f",
+          "datum": "2026-10-22 14:33",
+          "titel": "Huisstijl in index.html (meegekomen in de commit van v2.1.0)"
         }
       ]
     },

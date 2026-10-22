@@ -767,6 +767,7 @@
     <div class="meta-line">
       <span><span id="resultCount"></span> <button class="reset-link" id="resetBtn" type="button" hidden>· Filters wissen</button></span>
       <select class="sort" id="sortSelect" aria-label="Sorteren">
+        <option value="urgency">↕ Eerst drinken</option>
         <option value="statusYear">↕ Status/Jaar</option>
         <option value="yearAsc">↕ Jaar oud → nieuw</option>
         <option value="yearDesc">↕ Jaar nieuw → oud</option>
@@ -894,7 +895,7 @@ const COUNTRIES = {
 let wines = [];
 let producers = [];
 let tastings = [];
-const state = { status: 'all', color: '', country: '', sort: 'statusYear', search: '', filtersOpen: false, view: 'cellar' };
+const state = { status: 'all', color: '', country: '', sort: 'urgency', search: '', filtersOpen: false, view: 'cellar' };
 let pendingDeleteId = null;
 
 /* ---------- helpers ---------- */
@@ -1429,6 +1430,22 @@ function setView(view) {
 }
 
 /* ---------- list ---------- */
+// Standaardvolgorde "Eerst drinken": wat het dringendst open moet staat bovenaan.
+// Over de top → Nu drinken → Binnenkort → Kan wachten.
+// Over de top en Nu drinken: vroegst aflopend drinkvenster eerst; Binnenkort en Kan wachten: vroegst beginnend venster eerst.
+// Zonder drinkvenster achteraan in de groep; daarna oudste jaargang eerst.
+const urgencyOrder = { past: 0, now: 1, soon: 2, wait: 3 };
+function urgencyCompare(a, b) {
+  const g = (urgencyOrder[a.status] ?? 9) - (urgencyOrder[b.status] ?? 9);
+  if (g) return g;
+  const key = w => {
+    const { from, to } = windowOf(w);
+    const y = (w.status === 'past' || w.status === 'now') ? (to ?? from) : (from ?? to);
+    return y ?? 9999;
+  };
+  return (key(a) - key(b)) || ((a.year || 9999) - (b.year || 9999)) || (a.name || '').localeCompare(b.name || '');
+}
+
 function filteredWines() {
   return wines.filter(w => {
     if (state.status === 'drunk') { if (!w.drunk) return false; }
@@ -1446,6 +1463,7 @@ function filteredWines() {
     return true;
   }).sort((a, b) => {
     switch (state.sort) {
+      case 'urgency': return urgencyCompare(a, b);
       case 'yearAsc': return (a.year || 0) - (b.year || 0);
       case 'yearDesc': return (b.year || 0) - (a.year || 0);
       case 'name': return (a.name || '').localeCompare(b.name || '');
@@ -1675,7 +1693,7 @@ function renderList() {
   emptyMsg.style.display = items.length ? 'none' : 'block';
   if (!items.length) return;
 
-  const grouped = state.sort === 'statusYear' && state.status !== 'drunk';
+  const grouped = (state.sort === 'statusYear' || state.sort === 'urgency') && state.status !== 'drunk';
   let current = null;
   const frag = document.createDocumentFragment();
   items.forEach(w => {
