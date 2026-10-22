@@ -53,7 +53,7 @@ Je bent een ervaren sommelier. Op de foto staat een wijnetiket (of een fles). Le
 - country: ISO-landcode met 2 letters van het land in region, bv. FR, IT, DE, ES, GR (Griekenland), CY (Cyprus). Let op: Cyprus is CY, niet GR.
 - color: één van rood, wit, rose, mousserend, dessert.
 - windowFrom / windowTo: het drinkvenster in jaartallen (schat op basis van wijn en jaargang).
-- status: "now" als de wijn in {$year} op dronk is, "soon" als hij binnen ongeveer 2 jaar op zijn best is of zijn venster bijna voorbij is, anders "wait".
+- status: "past" als het drinkvenster vóór {$year} is afgelopen (over de top), "now" als de wijn in {$year} op dronk is, "soon" als hij binnen 2 jaar op dronk komt, anders "wait".
 - window: korte Nederlandse toelichting op het drinkvenster.
 - character: 2 à 3 zinnen in het Nederlands over stijl en smaak.
 - serving: 2 à 3 korte Nederlandse tips (temperatuur, karafferen, gerechten).
@@ -76,7 +76,7 @@ $schema = [
         'color' => ['type' => 'STRING', 'enum' => ['rood', 'wit', 'rose', 'mousserend', 'dessert']],
         'windowFrom' => ['type' => 'INTEGER'],
         'windowTo' => ['type' => 'INTEGER'],
-        'status' => ['type' => 'STRING', 'enum' => ['now', 'soon', 'wait']],
+        'status' => ['type' => 'STRING', 'enum' => ['now', 'soon', 'wait', 'past']],
         'window' => ['type' => 'STRING'],
         'character' => ['type' => 'STRING'],
         'serving' => ['type' => 'ARRAY', 'items' => ['type' => 'STRING']],

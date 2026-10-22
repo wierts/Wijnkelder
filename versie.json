@@ -1,7 +1,20 @@
 {
-  "versie": "2.1.1",
+  "versie": "2.1.2",
   "datum": "2026-10-22",
   "geschiedenis": [
+    {
+      "versie": "2.1.2",
+      "datum": "2026-10-22",
+      "soort": "fix",
+      "omschrijving": "Over de top klopt overal: tijdlijn volgt de statusbadge, Over de top te kiezen bij Bewerken en herkend bij etiket scannen",
+      "commits": [
+        {
+          "hash": "",
+          "datum": "2026-10-22",
+          "titel": "Over de top-classificatie gelijkgetrokken (deze versie)"
+        }
+      ]
+    },
     {
       "versie": "2.1.1",
       "datum": "2026-10-22",
@@ -9,9 +22,9 @@
       "omschrijving": "Sortering Eerst drinken staat nu echt in de app (ontbrak in v2.1.0)",
       "commits": [
         {
-          "hash": "",
-          "datum": "2026-10-22",
-          "titel": "Sortering Eerst drinken toegevoegd (deze versie)"
+          "hash": "4182cd6",
+          "datum": "2026-10-22 14:36",
+          "titel": "Sortering Eerst drinken toegevoegd"
         }
       ]
     },

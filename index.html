@@ -1487,7 +1487,8 @@ function windowData(w) {
   const max = Math.max(to, now);
   const span = Math.max(1, max - min);
   const pct = y => ((y - min) / span) * 100;
-  const cls = now < from ? 'wait' : now > to ? 'past' : (to - now <= 1 ? 'soon' : 'now');
+  // Zelfde indeling als de statusbadge (autoStatus), zodat tijdlijn en badge altijd overeenkomen
+  const cls = autoStatus(w);
   return { from, to, now, vintage, min, max, pct, cls };
 }
 
@@ -1507,7 +1508,7 @@ function timelineHtml(w) {
   const ticks = [vintage, from, to].filter(Boolean).map(y => `<span class="dw-tick" style="left:${pct(y)}%"></span>`).join('');
   const np = pct(now);
   let sum;
-  if (cls === 'wait') sum = `Nog ${plural(from - now, 'jaar', 'jaar')} wachten · drinken ${from}–${to}`;
+  if (cls === 'wait' || cls === 'soon') sum = `Over ${plural(from - now, 'jaar', 'jaar')} op dronk · drinken ${from}–${to}`;
   else if (cls === 'past') sum = `Over de top sinds ${to + 1} · venster was ${from}–${to}`;
   else sum = now === to ? `Laatste jaar van het drinkvenster (${from}–${to})` : `Op dronk · nog ${plural(to - now, 'jaar', 'jaar')} (tot ${to})`;
   return `<div class="dw ${cls}" role="img" aria-label="Jaargang ${w.year || 'onbekend'}, drinkvenster ${from} tot ${to}, nu ${now}">
@@ -1799,7 +1800,7 @@ function wineFields(prefix, w = {}) {
     </div>
     <div class="form-row">
       <div><label for="${prefix}_status" title="Met een ingevuld drinkvenster bepaalt de app de status zelf; deze keuze geldt alleen zonder drinkvenster.">Status (zonder drinkvenster)</label>
-        <select id="${prefix}_status">${opt('now', 'Nu drinken', w.savedStatus || w.status || 'wait')}${opt('soon', 'Binnenkort', w.savedStatus || w.status || 'wait')}${opt('wait', 'Kan wachten', w.savedStatus || w.status || 'wait')}</select></div>
+        <select id="${prefix}_status">${opt('now', 'Nu drinken', w.savedStatus || w.status || 'wait')}${opt('soon', 'Binnenkort', w.savedStatus || w.status || 'wait')}${opt('wait', 'Kan wachten', w.savedStatus || w.status || 'wait')}${opt('past', 'Over de top', w.savedStatus || w.status || 'wait')}</select></div>
       <div><label for="${prefix}_location">Locatie</label><input id="${prefix}_location" value="${escapeHtml(w.location || '')}" placeholder="B-04"></div>
       ${prefix === 'f' ? `<div><label for="f_qty">Aantal flessen</label><input id="f_qty" type="number" min="1" value="1"></div>` : '<div></div>'}
     </div>
