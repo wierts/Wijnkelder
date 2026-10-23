@@ -1,7 +1,20 @@
 {
-  "versie": "2.1.5",
-  "datum": "2026-10-23",
+  "versie": "2.1.6",
+  "datum": "2026-10-24",
   "geschiedenis": [
+    {
+      "versie": "2.1.6",
+      "datum": "2026-10-24",
+      "soort": "fix",
+      "omschrijving": "Etiketscan geeft het slimste model 45 seconden de tijd, zodat het niet meer steeds overstapt naar het lichtere model",
+      "commits": [
+        {
+          "hash": "",
+          "datum": "2026-10-24",
+          "titel": "Etiketscan: eerste model 45 seconden (deze versie)"
+        }
+      ]
+    },
     {
       "versie": "2.1.5",
       "datum": "2026-10-23",
@@ -9,9 +22,9 @@
       "omschrijving": "Etiketscan wacht hooguit 20 seconden per model en stapt dan over, zodat je niet meer de melding 'controleer je verbinding' krijgt",
       "commits": [
         {
-          "hash": "",
-          "datum": "2026-10-23",
-          "titel": "Etiketscan met kortere wachttijd en foutreden per model (deze versie)"
+          "hash": "40c3cdb",
+          "datum": "2026-10-23 23:23",
+          "titel": "Etiketscan met kortere wachttijd en foutreden per model"
         }
       ]
     },

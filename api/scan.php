@@ -163,12 +163,12 @@ function gemini_call($model, $body, $timeout) {
 }
 
 // Eerst het slimste gratis model; bij limiet, fout of time-out het lichtere model proberen.
-// Samen blijft dat onder de ~45 s, zodat de telefoon niet eerder opgeeft.
+// Het eerste model krijgt 45 s (in tests had het meer dan 20 s nodig), het lichtere model daarna 20 s.
 $models = array_values(array_unique(array_filter([
     defined('GEMINI_MODEL') ? GEMINI_MODEL : 'gemini-3.8-flash',
     'gemini-3.5-flash-lite',
 ])));
-$timeouts = [20, 20];
+$timeouts = [45, 20];
 @set_time_limit(90);
 
 $tried = [];   // per mislukt model: waarom (zichtbaar in het antwoord, handig bij storingen)
