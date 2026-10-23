@@ -64,6 +64,31 @@ Je bent een ervaren sommelier. Op de foto staat een wijnetiket (of een fles). Le
 Verzin geen producent of naam die niet op het etiket staat; laat een veld leeg als je het niet kunt lezen.
 TXT;
 
+// Bekende producenten uit de eigen kelder als leeshulp: lastig leesbare etiketten
+// (handschrift, losse letters in hokjes) worden zo toch goed gespeld.
+// Lukt de database niet, dan gewoon zonder lijst scannen.
+$known = [];
+try {
+    if (defined('DB_HOST')) {
+        $pdo = new PDO(
+            'mysql:host=' . DB_HOST . ';dbname=' . DB_NAME . ';charset=utf8mb4',
+            DB_USER,
+            DB_PASS,
+            [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_TIMEOUT => 5]
+        );
+        $known = $pdo->query("SELECT producer FROM wines WHERE producer <> ''
+            UNION SELECT name FROM producers WHERE name <> ''")->fetchAll(PDO::FETCH_COLUMN);
+    }
+} catch (Throwable $e) {
+    $known = [];
+}
+$known = array_slice(array_values(array_unique(array_filter(array_map('trim', $known)))), 0, 300);
+if ($known) {
+    $prompt .= "\nBekende producenten uit onze kelder: " . implode('; ', $known) . ".\n"
+        . "Lijkt de producent op het etiket (ook bij lastig leesbare letters) duidelijk op een van deze namen, "
+        . "gebruik dan precies die schrijfwijze. Staat hij er niet tussen, lees het etiket dan gewoon zelf en forceer geen overeenkomst.";
+}
+
 $schema = [
     'type' => 'OBJECT',
     'properties' => [
