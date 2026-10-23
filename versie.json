@@ -1,7 +1,20 @@
 {
-  "versie": "2.1.4",
+  "versie": "2.1.5",
   "datum": "2026-10-23",
   "geschiedenis": [
+    {
+      "versie": "2.1.5",
+      "datum": "2026-10-23",
+      "soort": "fix",
+      "omschrijving": "Etiketscan wacht hooguit 20 seconden per model en stapt dan over, zodat je niet meer de melding 'controleer je verbinding' krijgt",
+      "commits": [
+        {
+          "hash": "",
+          "datum": "2026-10-23",
+          "titel": "Etiketscan met kortere wachttijd en foutreden per model (deze versie)"
+        }
+      ]
+    },
     {
       "versie": "2.1.4",
       "datum": "2026-10-23",
@@ -9,9 +22,9 @@
       "omschrijving": "Etiketscan kent de producenten uit je kelder, zodat lastig leesbare namen (zoals Carilius) goed worden herkend",
       "commits": [
         {
-          "hash": "",
-          "datum": "2026-10-23",
-          "titel": "Etiketscan met bekende producenten als leeshulp (deze versie)"
+          "hash": "8b8ad99",
+          "datum": "2026-10-23 23:13",
+          "titel": "Etiketscan met bekende producenten als leeshulp"
         }
       ]
     },

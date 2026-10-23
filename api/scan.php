@@ -127,9 +127,12 @@ $body = json_encode([
     ],
 ]);
 
-function gemini_call($model, $body) {
+// Eén Gemini-aanroep met een maximale wachttijd in seconden.
+// Geeft [HTTP-code, antwoord, foutreden]; code 0 = geen antwoord (bv. time-out).
+function gemini_call($model, $body, $timeout) {
     $url = 'https://generativelanguage.googleapis.com/v1beta/models/' . rawurlencode($model) . ':generateContent';
     $headers = ['Content-Type: application/json', 'x-goog-api-key: ' . GEMINI_API_KEY];
+    $why = '';
     if (function_exists('curl_init')) {
         $ch = curl_init($url);
         curl_setopt_array($ch, [
@@ -137,46 +140,59 @@ function gemini_call($model, $body) {
             CURLOPT_POSTFIELDS => $body,
             CURLOPT_HTTPHEADER => $headers,
             CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_TIMEOUT => 60,
+            CURLOPT_CONNECTTIMEOUT => 8,
+            CURLOPT_TIMEOUT => $timeout,
         ]);
         $resp = curl_exec($ch);
         $code = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $errno = curl_errno($ch);
+        if ($errno === CURLE_OPERATION_TIMEDOUT) $why = 'time-out na ' . $timeout . ' s';
+        elseif ($errno) $why = 'verbindingsfout: ' . curl_error($ch);
         curl_close($ch);
     } else {
         $ctx = stream_context_create(['http' => [
             'method' => 'POST', 'header' => implode("\r\n", $headers), 'content' => $body,
-            'timeout' => 60, 'ignore_errors' => true,
+            'timeout' => $timeout, 'ignore_errors' => true,
         ]]);
         $resp = @file_get_contents($url, false, $ctx);
         $code = 0;
         if (isset($http_response_header[0]) && preg_match('/\s(\d{3})\s/', $http_response_header[0], $m)) $code = (int) $m[1];
+        if ($resp === false) $why = 'geen antwoord (mogelijk time-out na ' . $timeout . ' s)';
     }
-    return [$code, $resp];
+    return [$code, $resp, $why];
 }
 
-// Eerst het slimste gratis model; bij een limiet of fout het lichtere model proberen.
+// Eerst het slimste gratis model; bij limiet, fout of time-out het lichtere model proberen.
+// Samen blijft dat onder de ~45 s, zodat de telefoon niet eerder opgeeft.
 $models = array_values(array_unique(array_filter([
     defined('GEMINI_MODEL') ? GEMINI_MODEL : 'gemini-3.8-flash',
     'gemini-3.5-flash-lite',
 ])));
+$timeouts = [20, 20];
+@set_time_limit(90);
 
+$tried = [];   // per mislukt model: waarom (zichtbaar in het antwoord, handig bij storingen)
 $lastError = '';
-foreach ($models as $model) {
-    [$code, $resp] = gemini_call($model, $body);
+foreach ($models as $i => $model) {
+    [$code, $resp, $why] = gemini_call($model, $body, $timeouts[$i] ?? 20);
     $json = json_decode((string) $resp, true);
     if ($code === 200 && isset($json['candidates'][0]['content']['parts'][0]['text'])) {
         $wine = json_decode($json['candidates'][0]['content']['parts'][0]['text'], true);
         if (is_array($wine)) {
-            echo json_encode(['wine' => $wine, 'model' => $model]);
+            $out = ['wine' => $wine, 'model' => $model];
+            if ($tried) $out['tried'] = $tried;
+            echo json_encode($out);
             exit;
         }
         $lastError = 'Onleesbaar antwoord van Gemini.';
+        $tried[] = ['model' => $model, 'code' => $code, 'reason' => $lastError];
         continue;
     }
-    $lastError = $json['error']['message'] ?? ('HTTP ' . $code);
-    // Alleen doorgaan naar het volgende model bij limiet, onbekend model of serverfout
-    if (!in_array($code, [0, 404, 429, 500, 503], true)) break;
+    $lastError = $why ?: ($json['error']['message'] ?? ('HTTP ' . $code));
+    $tried[] = ['model' => $model, 'code' => $code, 'reason' => substr($lastError, 0, 300)];
+    // Alleen doorgaan naar het volgende model bij limiet, onbekend model, serverfout of time-out
+    if (!in_array($code, [0, 404, 429, 500, 503, 504], true)) break;
 }
 
 http_response_code(502);
-echo json_encode(['error' => 'Scannen mislukt: ' . $lastError]);
+echo json_encode(['error' => 'Scannen mislukt: ' . $lastError, 'tried' => $tried]);
