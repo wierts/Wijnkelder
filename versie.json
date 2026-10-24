@@ -1,7 +1,20 @@
 {
-  "versie": "2.1.6",
+  "versie": "2.2.0",
   "datum": "2026-10-24",
   "geschiedenis": [
+    {
+      "versie": "2.2.0",
+      "datum": "2026-10-24",
+      "soort": "verbetering",
+      "omschrijving": "Nieuw tabblad Kaart: wereldkaart met de landen en wijnregio's waar je wijnen vandaan komen. Per wijn kun je nu vastleggen of je hem in de winkel of bij de wijnmaker hebt gekocht.",
+      "commits": [
+        {
+          "hash": "",
+          "datum": "2026-10-24",
+          "titel": "Kaart en Gekocht bij (deze versie)"
+        }
+      ]
+    },
     {
       "versie": "2.1.6",
       "datum": "2026-10-24",
@@ -9,9 +22,9 @@
       "omschrijving": "Etiketscan geeft het slimste model 45 seconden de tijd, zodat het niet meer steeds overstapt naar het lichtere model",
       "commits": [
         {
-          "hash": "",
-          "datum": "2026-10-24",
-          "titel": "Etiketscan: eerste model 45 seconden (deze versie)"
+          "hash": "107a204",
+          "datum": "2026-10-24 00:52",
+          "titel": "Etiketscan: eerste model 45 seconden"
         }
       ]
     },

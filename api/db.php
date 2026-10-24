@@ -61,6 +61,9 @@ $extraColumns = [
     "ALTER TABLE wines ADD COLUMN market_note VARCHAR(160) DEFAULT ''",
     // Flesformaat in ml: 375 halve fles, 750 standaard, 1500 magnum, 3000 dubbele magnum
     "ALTER TABLE wines ADD COLUMN size SMALLINT DEFAULT 750",
+    // Gekocht bij: 'winkel' of 'wijnmaker' + naam van de winkel of het wijngoed
+    "ALTER TABLE wines ADD COLUMN purchase_source VARCHAR(20) DEFAULT ''",
+    "ALTER TABLE wines ADD COLUMN purchase_place VARCHAR(160) DEFAULT ''",
 ];
 foreach ($extraColumns as $sql) {
     try {

@@ -504,7 +504,7 @@
   .bottom-nav { display: none; }
   @media (max-width: 640px) {
     .bottom-nav {
-      display: grid; grid-template-columns: repeat(4, 1fr);
+      display: grid; grid-template-columns: repeat(5, 1fr);
       position: fixed; left: 0; right: 0; bottom: 0; z-index: 40;
       background: var(--card-bg); border-top: 1px solid var(--border);
       padding: 4px 4px calc(4px + env(safe-area-inset-bottom, 0px));
@@ -725,6 +725,41 @@
     .stat .n { font-size: 1.15rem; }
     .stat .l { white-space: nowrap; font-size: 0.72rem; }
   }
+  /* Kaart (v2.2.0) */
+  .map-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+  .map-summary { font-size: 0.9rem; color: var(--text-dim); }
+  .map-summary b { color: var(--ink); }
+  .map-toggle { display: flex; align-items: center; gap: 6px; font-size: 0.85rem; color: var(--text-dim); cursor: pointer; }
+  .map-toggle input { width: 18px; height: 18px; accent-color: var(--accent); }
+  .map-layout { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 16px; align-items: start; }
+  .map-box { position: relative; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; background: var(--card-bg); }
+  #worldMap { height: 560px; width: 100%; background: var(--bg); z-index: 0; }
+  .map-msg { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; text-align: center; padding: 24px; color: var(--text-dim); font-size: 0.9rem; background: var(--card-bg); }
+  .map-msg[hidden] { display: none; }
+  .map-side .group-head { margin-top: 0; }
+  .map-side .group-head .reset-link { font-size: 0.8rem; }
+  .map-row { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; padding: 9px 10px; margin-bottom: 6px;
+    border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--card-bg); color: var(--text); cursor: pointer; font: inherit; }
+  .map-row:hover { border-color: var(--text-dim); }
+  .map-row .fl { font-size: 1.25rem; line-height: 1; }
+  .map-row .nm { flex: 1; min-width: 0; font-weight: 600; font-size: 0.92rem; }
+  .map-row .nm small { display: block; font-weight: 400; color: var(--text-dim); font-size: 0.78rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .map-row .ct { font-size: 0.82rem; color: var(--text-dim); white-space: nowrap; }
+  .map-row .bar { display: block; height: 3px; border-radius: 2px; background: var(--accent); margin-top: 5px; }
+  .map-pin { display: flex; align-items: center; justify-content: center; border-radius: 50%; background: var(--accent); color: #fff;
+    font: 700 12px/1 Overpass, system-ui, sans-serif; border: 2px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,0.35); }
+  .leaflet-container { font-family: Overpass, system-ui, sans-serif; }
+  .leaflet-tooltip.map-tip { font-size: 0.8rem; font-weight: 600; }
+  .leaflet-popup-content-wrapper, .leaflet-popup-tip { background: var(--card-bg); color: var(--text); }
+  .leaflet-popup-content { margin: 10px 12px; font-size: 0.85rem; line-height: 1.45; }
+  .leaflet-popup-content b { color: var(--ink); }
+  .leaflet-control-attribution { font-size: 9px; }
+  #worldMap .leaflet-bar a, #worldMap .leaflet-bar a:hover { background: var(--card-bg); color: var(--ink); border-bottom-color: var(--border); }
+  #worldMap .leaflet-control-attribution { background: var(--card-bg); color: var(--text-dim); }
+  @media (max-width: 900px) {
+    .map-layout { grid-template-columns: 1fr; }
+    #worldMap { height: 58vh; min-height: 320px; }
+  }
 </style>
 </head>
 <body>
@@ -736,6 +771,7 @@
       <div class="subtitle" id="headerCount">Laden…</div>
     </div>
     <div class="header-actions">
+      <button class="add-btn ghost" id="mapBtn" aria-pressed="false" type="button">🗺️ Kaart</button>
       <button class="add-btn ghost" id="historyBtn" aria-pressed="false" type="button">📊 Historie</button>
       <label class="add-btn" id="quickScanBtn" for="quickScanInput" role="button" tabindex="0" aria-label="Wijn scannen">📷<span class="add-label"> Scan</span></label>
       <input id="quickScanInput" type="file" accept="image/*" capture="environment" hidden>
@@ -800,6 +836,20 @@
   <div class="empty" id="emptyMsg" style="display:none;">Geen flessen gevonden. Pas je zoekterm of filters aan.</div>
 </div>
 
+<div id="mapView" hidden>
+  <div class="map-head">
+    <div class="map-summary" id="mapSummary"></div>
+    <label class="map-toggle"><input type="checkbox" id="mapDrunk"> Ook opgedronken</label>
+  </div>
+  <div class="map-layout">
+    <div class="map-box"><div id="worldMap" role="region" aria-label="Wereldkaart met herkomst van de wijnen"></div><div class="map-msg" id="mapMsg" hidden></div></div>
+    <aside class="map-side">
+      <div class="group-head"><h3 id="mapSideTitle">Per land</h3><button class="reset-link" id="mapBack" type="button" hidden>← Alle landen</button></div>
+      <div id="mapSideList"></div>
+    </aside>
+  </div>
+</div>
+
 <div id="historyView" hidden>
   <div class="history-summary" id="historySummary"></div>
   <div id="historyFavs"></div>
@@ -812,6 +862,7 @@
   <button data-nav="cellar" aria-current="page" type="button"><span class="ico" aria-hidden="true">🍷</span>Kelder</button>
   <button data-nav="search" type="button"><span class="ico" aria-hidden="true">🔍</span>Zoeken</button>
   <button data-nav="choose" type="button"><span class="ico" aria-hidden="true">🎲</span>Kiezen</button>
+  <button data-nav="map" type="button"><span class="ico" aria-hidden="true">🗺️</span>Kaart</button>
   <button data-nav="history" type="button"><span class="ico" aria-hidden="true">📊</span>Historie</button>
 </nav>
 
@@ -902,6 +953,10 @@ const COUNTRIES = {
   GR: 'Griekenland', CY: 'Cyprus', HU: 'Hongarije', SI: 'Slovenië', NL: 'Nederland', US: 'Verenigde Staten',
   AR: 'Argentinië', CL: 'Chili', ZA: 'Zuid-Afrika', AU: 'Australië', NZ: 'Nieuw-Zeeland'
 };
+
+// Gekocht bij: in de winkel of rechtstreeks bij de wijnmaker
+const SOURCES = { winkel: '🏪 Winkel', wijnmaker: '🍇 Wijnmaker' };
+const sourceText = w => [SOURCES[w.purchaseSource], w.purchasePlace].filter(Boolean).join(' · ');
 
 let wines = [];
 let producers = [];
@@ -1426,7 +1481,9 @@ document.querySelector('.bottom-nav').addEventListener('click', e => {
   }
   if (nav === 'choose') document.getElementById('chooseModalOverlay').classList.add('open');
   if (nav === 'history') setView('history');
+  if (nav === 'map') setView('map');
 });
+document.getElementById('mapBtn').addEventListener('click', () => setView(state.view === 'map' ? 'cellar' : 'map'));
 document.getElementById('chooseModalOverlay').addEventListener('click', e => {
   const b = e.target.closest('[data-choose]');
   if (!b) return;
@@ -1439,13 +1496,335 @@ function setView(view) {
   state.view = view;
   document.getElementById('cellarView').hidden = view !== 'cellar';
   document.getElementById('historyView').hidden = view !== 'history';
+  document.getElementById('mapView').hidden = view !== 'map';
   document.getElementById('historyBtn').setAttribute('aria-pressed', String(view === 'history'));
+  document.getElementById('mapBtn').setAttribute('aria-pressed', String(view === 'map'));
   document.querySelectorAll('.bottom-nav [data-nav]').forEach(b => {
     const on = b.dataset.nav === view || (view === 'cellar' && b.dataset.nav === 'cellar');
     if (on) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current');
   });
   if (view === 'history') { renderHistory(); window.scrollTo({ top: 0 }); }
+  if (view === 'map') { window.scrollTo({ top: 0 }); renderMap(); }
 }
+
+/* ---------- kaart (v2.2.0) ---------- */
+// Leaflet en de landgrenzen worden pas geladen als de kaart voor het eerst opent.
+const MAP_LIBS = {
+  css: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css',
+  js: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js',
+  topo: 'https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js',
+  world: 'https://cdn.jsdelivr.net/npm/world-atlas@2.0.2/countries-110m.json'
+};
+// ISO-landcode → numerieke code in world-atlas, plus het midden van het land (lat, lng)
+const COUNTRY_GEO = {
+  FR: ['250', 46.6, 2.4], IT: ['380', 42.8, 12.5], ES: ['724', 40.2, -3.7], PT: ['620', 39.7, -8.0],
+  DE: ['276', 50.6, 9.8], AT: ['040', 47.6, 14.6], GR: ['300', 39.3, 22.0], CY: ['196', 35.0, 33.1],
+  HU: ['348', 47.2, 19.4], SI: ['705', 46.1, 14.8], NL: ['528', 52.2, 5.5], US: ['840', 39.5, -98.5],
+  AR: ['032', -35.0, -65.0], CL: ['152', -33.5, -71.0], ZA: ['710', -30.5, 24.5], AU: ['036', -27.0, 134.0],
+  NZ: ['554', -41.5, 172.5]
+};
+// Bekende wijnregio's: patroon op regio/naam → [label, lat, lng]. Eerste treffer wint, dus specifiek vóór algemeen.
+const WINE_REGIONS = [
+  [/pauillac|margaux|saint-julien|st-julien|saint-est[eè]phe|m[eé]doc|haut-m[eé]doc/, 'Médoc', 45.15, -0.75],
+  [/saint-[eé]milion|st-[eé]milion|pomerol/, 'Saint-Émilion / Pomerol', 44.89, -0.16],
+  [/pessac|graves|sauternes|barsac/, 'Graves / Sauternes', 44.6, -0.35],
+  [/bordeaux|entre-deux-mers/, 'Bordeaux', 44.84, -0.58],
+  [/chablis/, 'Chablis', 47.81, 3.8],
+  [/beaujolais|morgon|fleurie|moulin-[aà]-vent/, 'Beaujolais', 46.1, 4.65],
+  [/bourgogne|burgund|meursault|beaune|nuits|puligny|chassagne|gevrey|volnay|pommard|c[oô]te d'or|m[aâ]connais|pouilly-fuiss/, 'Bourgogne', 47.05, 4.8],
+  [/champagne/, 'Champagne', 49.05, 4.0],
+  [/hermitage|c[oô]te-r[oô]tie|crozes|cornas|saint-joseph|condrieu/, 'Noordelijke Rhône', 45.07, 4.83],
+  [/ch[aâ]teauneuf|gigondas|vacqueyras|rh[oô]ne/, 'Rhône', 44.1, 4.85],
+  [/sancerre|pouilly-fum/, 'Sancerre', 47.33, 2.84],
+  [/loire|vouvray|chinon|muscadet|anjou|saumur|touraine/, 'Loire', 47.3, 0.7],
+  [/elzas|alsace/, 'Elzas', 48.2, 7.3],
+  [/roussillon/, 'Roussillon', 42.6, 2.8],
+  [/languedoc|minervois|corbi[eè]res|pic saint-loup|faug[eè]res/, 'Languedoc', 43.5, 3.3],
+  [/provence|bandol/, 'Provence', 43.45, 6.2],
+  [/jura/, 'Jura', 46.8, 5.7],
+  [/cahors|sud-ouest|madiran|bergerac|gaillac/, 'Zuidwest-Frankrijk', 44.45, 1.0],
+  [/corse|corsica/, 'Corsica', 42.1, 9.1],
+  [/barolo|barbaresco|langhe|piemonte|piedmont|roero|alba\b|asti/, 'Piemonte', 44.6, 7.95],
+  [/bolgheri/, 'Bolgheri', 43.23, 10.6],
+  [/montalcino|brunello/, 'Montalcino', 43.06, 11.49],
+  [/chianti|toscan|tuscan|montepulciano d|maremma/, 'Toscane', 43.45, 11.25],
+  [/valpolicella|amarone|soave|veneto|prosecco|bardolino|lugana/, 'Veneto', 45.5, 11.0],
+  [/etna/, 'Etna', 37.75, 15.0],
+  [/sicili|sicily|sicilia/, 'Sicilië', 37.6, 14.2],
+  [/alto adige|s[uü]dtirol|trentino/, 'Alto Adige', 46.5, 11.3],
+  [/friuli|collio/, 'Friuli', 46.0, 13.2],
+  [/franciacorta|lombard/, 'Lombardije', 45.6, 10.0],
+  [/puglia|apuli|salento|primitivo di manduria/, 'Puglia', 40.8, 17.0],
+  [/abruzz/, 'Abruzzo', 42.3, 13.9],
+  [/campania|taurasi|fiano di|greco di/, 'Campania', 41.0, 14.8],
+  [/sardegna|sardini|sardinia/, 'Sardinië', 40.0, 9.0],
+  [/marche|verdicchio/, 'Marche', 43.4, 13.2],
+  [/umbri/, 'Umbrië', 42.9, 12.5],
+  [/rioja/, 'Rioja', 42.45, -2.6],
+  [/ribera del duero/, 'Ribera del Duero', 41.65, -3.7],
+  [/priorat|montsant/, 'Priorat', 41.2, 0.8],
+  [/r[ií]as baixas|albari/, 'Rías Baixas', 42.4, -8.7],
+  [/rueda/, 'Rueda', 41.4, -4.95],
+  [/\btoro\b/, 'Toro', 41.5, -5.4],
+  [/pened[eè]s|cava\b/, 'Penedès', 41.35, 1.7],
+  [/jerez|sherry/, 'Jerez', 36.7, -6.1],
+  [/navarra/, 'Navarra', 42.7, -1.6],
+  [/bierzo/, 'Bierzo', 42.6, -6.6],
+  [/jumilla|yecla|alicante/, 'Jumilla', 38.5, -1.3],
+  [/douro|\bport\b|porto/, 'Douro', 41.15, -7.8],
+  [/alentejo/, 'Alentejo', 38.5, -7.9],
+  [/d[aã]o\b/, 'Dão', 40.55, -7.9],
+  [/vinho verde|minho/, 'Vinho Verde', 41.7, -8.4],
+  [/madeira/, 'Madeira', 32.75, -16.95],
+  [/mosel/, 'Mosel', 49.9, 6.9],
+  [/rheingau/, 'Rheingau', 50.0, 8.0],
+  [/rheinhessen/, 'Rheinhessen', 49.85, 8.15],
+  [/pfalz/, 'Pfalz', 49.3, 8.15],
+  [/\bnahe\b/, 'Nahe', 49.8, 7.75],
+  [/\bbaden\b|kaiserstuhl/, 'Baden', 48.3, 7.9],
+  [/franken/, 'Franken', 49.8, 10.0],
+  [/w[uü]rttemberg/, 'Württemberg', 48.9, 9.2],
+  [/wachau/, 'Wachau', 48.35, 15.4],
+  [/kamptal|kremstal/, 'Kamptal / Kremstal', 48.45, 15.65],
+  [/burgenland/, 'Burgenland', 47.7, 16.7],
+  [/steiermark|styria/, 'Steiermark', 46.7, 15.5],
+  [/santorini/, 'Santorini', 36.4, 25.43],
+  [/naoussa/, 'Naoussa', 40.63, 22.07],
+  [/amyntaio/, 'Amyntaio', 40.69, 21.68],
+  [/nemea/, 'Nemea', 37.82, 22.66],
+  [/mantinia/, 'Mantinia', 37.6, 22.4],
+  [/rapsani/, 'Rapsani', 39.9, 22.55],
+  [/kreta|crete/, 'Kreta', 35.24, 24.9],
+  [/paros/, 'Paros', 37.08, 25.15],
+  [/kefalonia|cephalonia/, 'Kefalonia', 38.2, 20.5],
+  [/attica|attiki/, 'Attica', 38.0, 23.8],
+  [/makedon|macedon/, 'Macedonië (GR)', 40.6, 22.5],
+  [/peloponn/, 'Peloponnesos', 37.5, 22.3],
+  [/paphos|pafos/, 'Paphos', 34.85, 32.5],
+  [/limassol|lemesos|krasochoria|commandaria/, 'Limassol', 34.85, 32.92],
+  [/troodos/, 'Troodos', 34.93, 32.87],
+  [/tokaj/, 'Tokaj', 48.12, 21.4],
+  [/vill[aá]ny/, 'Villány', 45.87, 18.45],
+  [/\beger\b/, 'Eger', 47.9, 20.37],
+  [/brda|goriška/, 'Brda', 46.0, 13.55],
+  [/vipava/, 'Vipava', 45.85, 13.9],
+  [/napa/, 'Napa Valley', 38.5, -122.3],
+  [/sonoma/, 'Sonoma', 38.45, -122.8],
+  [/paso robles|central coast|santa barbara/, 'Central Coast', 35.6, -120.7],
+  [/oregon|willamette/, 'Oregon', 45.1, -123.1],
+  [/washington/, 'Washington', 46.3, -119.5],
+  [/california/, 'Californië', 37.5, -121.0],
+  [/mendoza|uco/, 'Mendoza', -33.0, -68.8],
+  [/salta|cafayate/, 'Salta', -25.0, -65.6],
+  [/patagoni|neuqu/, 'Patagonië', -38.9, -68.1],
+  [/maipo/, 'Maipo', -33.7, -70.7],
+  [/colchagua|rapel/, 'Colchagua', -34.6, -71.3],
+  [/casablanca/, 'Casablanca', -33.3, -71.4],
+  [/aconcagua/, 'Aconcagua', -32.8, -70.8],
+  [/stellenbosch/, 'Stellenbosch', -33.93, 18.86],
+  [/swartland/, 'Swartland', -33.35, 18.7],
+  [/franschhoek|paarl/, 'Franschhoek / Paarl', -33.85, 19.0],
+  [/constantia/, 'Constantia', -34.03, 18.42],
+  [/hemel-en-aarde|walker bay|hermanus/, 'Hemel-en-Aarde', -34.4, 19.25],
+  [/barossa|eden valley/, 'Barossa', -34.55, 138.95],
+  [/mclaren/, 'McLaren Vale', -35.22, 138.55],
+  [/clare valley/, 'Clare Valley', -33.83, 138.6],
+  [/coonawarra/, 'Coonawarra', -37.3, 140.8],
+  [/margaret river/, 'Margaret River', -33.95, 115.07],
+  [/yarra/, 'Yarra Valley', -37.7, 145.5],
+  [/hunter/, 'Hunter Valley', -32.8, 151.3],
+  [/marlborough/, 'Marlborough', -41.5, 173.9],
+  [/central otago/, 'Central Otago', -45.0, 169.2],
+  [/hawke/, "Hawke's Bay", -39.6, 176.9],
+  [/martinborough|wairarapa/, 'Martinborough', -41.2, 175.45],
+  [/limburg/, 'Limburg', 50.85, 5.8],
+  [/zeeland/, 'Zeeland', 51.5, 3.8],
+  [/gelderland|betuwe/, 'Gelderland', 51.95, 5.9]
+];
+const mapState = { map: null, layers: null, world: null, loading: null, country: '' };
+
+function loadScript(src) {
+  return new Promise((ok, fail) => {
+    const el = document.createElement('script');
+    el.src = src; el.onload = ok; el.onerror = () => fail(new Error('laden mislukt: ' + src));
+    document.head.appendChild(el);
+  });
+}
+function loadMapLibs() {
+  if (mapState.loading) return mapState.loading;
+  const css = document.createElement('link');
+  css.rel = 'stylesheet'; css.href = MAP_LIBS.css;
+  document.head.appendChild(css);
+  mapState.loading = Promise.all([loadScript(MAP_LIBS.js), loadScript(MAP_LIBS.topo)])
+    .then(() => fetch(MAP_LIBS.world))
+    .then(r => { if (!r.ok) throw new Error('landgrenzen niet geladen'); return r.json(); })
+    .then(topo => { mapState.world = topojson.feature(topo, topo.objects.countries); })
+    .catch(err => { mapState.loading = null; throw err; });
+  return mapState.loading;
+}
+
+// Plek van een wijn: bekende regio als die herkend wordt, anders het midden van het land.
+function placeOf(w) {
+  const c = countryOf(w);
+  const text = [w.region, w.name].join(' ').toLowerCase();
+  for (const [re, label, lat, lng] of WINE_REGIONS) if (re.test(text)) return { key: 'r:' + label, label, lat, lng, country: c };
+  const g = COUNTRY_GEO[c];
+  if (g) return { key: 'c:' + c, label: COUNTRIES[c] || c, lat: g[1], lng: g[2], country: c, countryOnly: true };
+  return null;
+}
+function mapWines() {
+  const withDrunk = document.getElementById('mapDrunk').checked;
+  return wines.filter(w => withDrunk || !w.drunk);
+}
+const bottlesOf = list => list.reduce((n, w) => n + (w.drunk ? 0 : (w.qty || 1)), 0);
+function mapCountText(list) {
+  const b = bottlesOf(list);
+  const d = list.filter(w => w.drunk).length;
+  return b ? plural(b, 'fles', 'flessen') + (d ? ` · ${d} op` : '') : (d ? `${d} opgedronken` : '');
+}
+function groupBy(list, keyFn) {
+  const m = new Map();
+  for (const w of list) { const k = keyFn(w); if (!k) continue; if (!m.has(k)) m.set(k, []); m.get(k).push(w); }
+  return m;
+}
+
+function renderMapSide() {
+  const list = mapWines();
+  const side = document.getElementById('mapSideList');
+  const back = document.getElementById('mapBack');
+  const title = document.getElementById('mapSideTitle');
+  const c = mapState.country;
+  if (c) {
+    const sel = list.filter(w => countryOf(w) === c);
+    title.textContent = `${flag(c)} ${COUNTRIES[c] || c}`;
+    back.hidden = false;
+    const byPlace = groupBy(sel, w => (placeOf(w) || { label: 'Overig' }).label);
+    side.innerHTML = [...byPlace.entries()].sort((a, b) => bottlesOf(b[1]) - bottlesOf(a[1])).map(([label, ws]) => `
+      <div class="hint" style="margin:10px 2px 4px;font-weight:700">${escapeHtml(label)} · ${mapCountText(ws)}</div>
+      ${ws.map(w => `<button class="map-row" data-wine="${escapeHtml(w.id)}" type="button">
+        <span class="nm">${escapeHtml(w.name)}${w.year ? ' ' + w.year : ''}<small>${escapeHtml([w.producer, sourceText(w)].filter(Boolean).join(' · '))}</small></span>
+        <span class="ct">${w.drunk ? 'op' : '× ' + (w.qty || 1)}</span></button>`).join('')}`).join('')
+      || '<div class="empty">Geen wijnen uit dit land.</div>';
+    return;
+  }
+  title.textContent = 'Per land';
+  back.hidden = true;
+  const byCountry = [...groupBy(list, w => countryOf(w) || '?').entries()].sort((a, b) => bottlesOf(b[1]) - bottlesOf(a[1]) || b[1].length - a[1].length);
+  const max = Math.max(1, ...byCountry.map(([, ws]) => bottlesOf(ws)));
+  side.innerHTML = byCountry.map(([code, ws]) => {
+    const places = [...new Set(ws.map(w => placeOf(w)).filter(p => p && !p.countryOnly).map(p => p.label))];
+    return `<button class="map-row" data-country="${code}" type="button">
+      <span class="fl">${code === '?' ? '🌍' : flag(code)}</span>
+      <span class="nm">${escapeHtml(code === '?' ? 'Land onbekend' : (COUNTRIES[code] || code))}<small>${escapeHtml(places.join(', ') || plural(ws.length, 'wijn', 'wijnen'))}</small>
+        <span class="bar" style="width:${Math.max(4, Math.round(bottlesOf(ws) / max * 100))}%"></span></span>
+      <span class="ct">${mapCountText(ws)}</span></button>`;
+  }).join('') || '<div class="empty">Nog geen wijnen in de kelder.</div>';
+}
+
+function renderMapSummary() {
+  const list = mapWines();
+  const countries = new Set(list.map(countryOf).filter(Boolean));
+  const regions = new Set(list.map(placeOf).filter(p => p && !p.countryOnly).map(p => p.key));
+  document.getElementById('mapSummary').innerHTML =
+    `<b>${plural(bottlesOf(list), 'fles', 'flessen')}</b> uit <b>${plural(countries.size, 'land', 'landen')}</b> en <b>${plural(regions.size, 'wijnregio', 'wijnregio\'s')}</b>`;
+}
+
+async function renderMap() {
+  renderMapSummary();
+  renderMapSide();
+  const msg = document.getElementById('mapMsg');
+  try {
+    if (!window.L || !mapState.world) { msg.hidden = false; msg.textContent = 'Kaart laden…'; }
+    await loadMapLibs();
+  } catch (err) {
+    msg.hidden = false;
+    msg.textContent = 'De kaart kon niet laden (geen internet?). De lijst per land werkt wel.';
+    return;
+  }
+  msg.hidden = true;
+  if (!mapState.map) {
+    mapState.map = L.map('worldMap', { worldCopyJump: true, minZoom: 2, maxZoom: 10 }).setView([40, 10], 2);
+    mapState.tiles = L.tileLayer('', {
+      subdomains: 'abcd', maxZoom: 19,
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
+    }).addTo(mapState.map);
+    mapState.layers = L.layerGroup().addTo(mapState.map);
+    mapState.map.attributionControl.setPrefix('<a href="https://leafletjs.com">Leaflet</a>');
+  }
+  const dark = getComputedStyle(document.body).backgroundColor.match(/\d+/g).slice(0, 3).reduce((a, b) => a + +b, 0) < 200;
+  mapState.tiles.setUrl(`https://{s}.basemaps.cartocdn.com/${dark ? 'dark' : 'light'}_nolabels/{z}/{x}/{y}{r}.png`);
+  setTimeout(() => mapState.map.invalidateSize(), 0);
+  drawMapLayers();
+}
+
+function drawMapLayers() {
+  const L_ = window.L, map = mapState.map;
+  if (!L_ || !map) return;
+  mapState.layers.clearLayers();
+  const list = mapWines();
+  const accent = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#7b1e2b';
+  const perCountry = groupBy(list, countryOf);
+  const max = Math.max(1, ...[...perCountry.values()].map(ws => bottlesOf(ws) || 1));
+  const idToCode = Object.fromEntries(Object.entries(COUNTRY_GEO).map(([c, g]) => [g[0], c]));
+  const bounds = [];
+  L_.geoJSON(mapState.world, {
+    filter: f => perCountry.has(idToCode[f.id]),
+    style: f => {
+      const n = bottlesOf(perCountry.get(idToCode[f.id])) || 1;
+      return { color: accent, weight: 1, fillColor: accent, fillOpacity: 0.18 + 0.42 * (n / max) };
+    },
+    onEachFeature: (f, layer) => {
+      const c = idToCode[f.id];
+      layer.bindTooltip(`${flag(c)} ${COUNTRIES[c] || c} · ${mapCountText(perCountry.get(c))}`, { sticky: true, className: 'map-tip' });
+      layer.on('click', () => selectMapCountry(c));
+    }
+  }).addTo(mapState.layers);
+
+  const perPlace = new Map();
+  for (const w of list) {
+    const p = placeOf(w);
+    if (!p) continue;
+    if (!perPlace.has(p.key)) perPlace.set(p.key, { ...p, wines: [] });
+    perPlace.get(p.key).wines.push(w);
+  }
+  for (const p of perPlace.values()) {
+    const n = bottlesOf(p.wines) || p.wines.length;
+    const size = Math.round(22 + Math.min(16, Math.sqrt(n) * 4));
+    const icon = L_.divIcon({ className: '', html: `<div class="map-pin" style="width:${size}px;height:${size}px">${n}</div>`, iconSize: [size, size], iconAnchor: [size / 2, size / 2] });
+    const m = L_.marker([p.lat, p.lng], { icon, title: p.label, riseOnHover: true });
+    m.bindPopup(`<b>${escapeHtml(p.label)}</b> ${flag(p.country)}<br>${p.wines.map(w =>
+      `<a href="#" data-wine="${escapeHtml(w.id)}">${escapeHtml(w.name)}${w.year ? ' ' + w.year : ''}</a> <span style="color:var(--text-dim)">${w.drunk ? '(op)' : '× ' + (w.qty || 1)}</span>`).join('<br>')}`);
+    m.addTo(mapState.layers);
+    bounds.push([p.lat, p.lng]);
+  }
+  if (!mapState.fitted && bounds.length) {
+    map.fitBounds(bounds, { padding: [40, 40], maxZoom: 5 });
+    mapState.fitted = true;
+  }
+}
+
+function selectMapCountry(c) {
+  mapState.country = c;
+  renderMapSide();
+  if (window.innerWidth <= 900) document.querySelector('.map-side').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  if (!mapState.map) return;
+  const pts = mapWines().filter(w => countryOf(w) === c).map(placeOf).filter(Boolean).map(p => [p.lat, p.lng]);
+  if (pts.length) mapState.map.fitBounds(pts, { padding: [60, 60], maxZoom: 7 });
+}
+
+document.getElementById('mapDrunk').addEventListener('change', () => { renderMapSummary(); renderMapSide(); drawMapLayers(); });
+document.getElementById('mapBack').addEventListener('click', () => {
+  mapState.country = '';
+  renderMapSide();
+  mapState.fitted = false;
+  drawMapLayers();
+});
+document.getElementById('mapView').addEventListener('click', e => {
+  const wineEl = e.target.closest('[data-wine]');
+  if (wineEl) { e.preventDefault(); openDetailModal(wineEl.dataset.wine); return; }
+  const cEl = e.target.closest('[data-country]');
+  if (cEl && cEl.dataset.country !== '?') selectMapCountry(cEl.dataset.country);
+});
 
 /* ---------- list ---------- */
 // Standaardvolgorde "Eerst drinken": wat het dringendst open moet staat bovenaan.
@@ -1599,6 +1978,7 @@ function openDetailModal(id, scan) {
           <dt>Locatie</dt>${val(locText(w) ? escapeHtml(locText(w)) : '')}
           <dt>Aankoopdatum</dt>${val(fmtDate(w.purchaseDate))}
           <dt>Aankoopprijs</dt>${val(fmtPrice(w.purchasePrice))}
+          <dt>Gekocht bij</dt>${val(sourceText(w) ? escapeHtml(sourceText(w)) : '')}
           <dt>Marktprijs</dt>${val(hasPrice(w) ? '≈ ' + fmtPrice(w.marketPrice) + (isEstimate(w) ? ' <span class="kv-note">(schatting)</span>' : '') : '')}
           ${hasPrice(w) && qty > 1 ? `<dt>Waarde voorraad</dt><dd>≈ ${fmtPrice(w.marketPrice * qty)}</dd>` : ''}
         </dl>
@@ -1738,6 +2118,7 @@ function render() {
   renderChips();
   renderList();
   if (state.view === 'history') renderHistory();
+  if (state.view === 'map') { renderMapSummary(); renderMapSide(); drawMapLayers(); }
 }
 
 function closeMenus(except) {
@@ -1837,6 +2218,11 @@ function wineFields(prefix, w = {}) {
       <div><label for="${prefix}_pprice">Aankoopprijs (€)</label><input id="${prefix}_pprice" type="number" inputmode="decimal" min="0" step="0.01" value="${w.purchasePrice ?? ''}" placeholder="45,00"></div>
     </div>
     <div class="form-row two">
+      <div><label for="${prefix}_psource">Gekocht bij</label>
+        <select id="${prefix}_psource">${opt('', '—', w.purchaseSource || '')}${Object.entries(SOURCES).map(([v, l]) => opt(v, l, w.purchaseSource || '')).join('')}</select></div>
+      <div><label for="${prefix}_pplace">Naam winkel / wijngoed</label><input id="${prefix}_pplace" value="${escapeHtml(w.purchasePlace || '')}" placeholder="bv. Carilius, Gall &amp; Gall"></div>
+    </div>
+    <div class="form-row two">
       <div><label for="${prefix}_mprice">Marktprijs (€ per fles)</label><input id="${prefix}_mprice" type="number" inputmode="decimal" min="0" step="0.01" value="${w.marketPrice ?? ''}" placeholder="30,00"></div>
       <div><label for="${prefix}_mnote">Bron marktprijs</label><input id="${prefix}_mnote" value="${escapeHtml(w.marketNote || '')}" placeholder="Vivino NL, sept 2026"></div>
     </div>
@@ -1863,6 +2249,7 @@ function readFields(prefix) {
     status: v('status'), location: v('location'), window: v('window'), character: v('character'),
     windowFrom: parseInt(v('wfrom')) || null, windowTo: parseInt(v('wto')) || null,
     purchaseDate: v('pdate') || null, purchasePrice: v('pprice') === '' ? null : parseFloat(v('pprice').replace(',', '.')),
+    purchaseSource: v('psource'), purchasePlace: v('pplace'),
     notes: document.getElementById(prefix + '_notes').value.trim(),
     image: v('image'),
     marketPrice: v('mprice') === '' ? null : parseFloat(v('mprice').replace(',', '.')),
@@ -2196,7 +2583,8 @@ document.getElementById('bulkSaveBtn').addEventListener('click', async () => {
           year: w.year || null, status: w.status || 'wait', window: w.window || '', location: w.location || '',
           character: w.character || '', serving: w.serving || [], qty: w.qty || 1,
           windowFrom: w.windowFrom || null, windowTo: w.windowTo || null,
-          purchaseDate: w.purchaseDate || null, purchasePrice: w.purchasePrice ?? null, notes: w.notes || '', image: w.image || '', marketPrice: w.marketPrice ?? null, marketNote: w.marketNote || '', size: w.size || 750
+          purchaseDate: w.purchaseDate || null, purchasePrice: w.purchasePrice ?? null, notes: w.notes || '', image: w.image || '', marketPrice: w.marketPrice ?? null, marketNote: w.marketNote || '', size: w.size || 750,
+          purchaseSource: w.purchaseSource || '', purchasePlace: w.purchasePlace || ''
         
         })
       });

@@ -42,6 +42,11 @@ function clean_size($v) {
     return in_array($v, [375, 500, 750, 1500, 3000, 6000], true) ? $v : 750;
 }
 
+function clean_source($v) {
+    $v = strtolower(trim((string) $v));
+    return in_array($v, ['winkel', 'wijnmaker'], true) ? $v : '';
+}
+
 function clean_short($v) {
     return mb_substr(trim((string) $v), 0, 160);
 }
@@ -69,6 +74,8 @@ const EXTRA_FIELDS = [
     'marketPrice' => ['market_price', 'clean_price'],
     'marketNote' => ['market_note', 'clean_short'],
     'size' => ['size', 'clean_size'],
+    'purchaseSource' => ['purchase_source', 'clean_source'],
+    'purchasePlace' => ['purchase_place', 'clean_short'],
 ];
 
 $method = $_SERVER['REQUEST_METHOD'];
@@ -103,6 +110,8 @@ switch ($method) {
                 'marketPrice' => isset($r['market_price']) ? (float) $r['market_price'] : null,
                 'marketNote' => $r['market_note'] ?? '',
                 'size' => isset($r['size']) ? (int) $r['size'] : 750,
+                'purchaseSource' => $r['purchase_source'] ?? '',
+                'purchasePlace' => $r['purchase_place'] ?? '',
             ];
         }, $rows);
         echo json_encode($wines);
