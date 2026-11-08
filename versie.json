@@ -1,7 +1,20 @@
 {
-  "versie": "2.2.1",
+  "versie": "2.3.0",
   "datum": "2026-11-08",
   "geschiedenis": [
+    {
+      "versie": "2.3.0",
+      "datum": "2026-11-08",
+      "soort": "verbetering",
+      "omschrijving": "Back-up en export (JSON en CSV voor Excel) onder Historie, offline je kelder bekijken, koppeling met Home Assistant, dubbele wijnen herkennen bij Meerdere plakken, snellere app doordat de database niet meer bij elke actie wordt gecontroleerd, en etiketfoto's van verwijderde wijnen worden opgeruimd.",
+      "commits": [
+        {
+          "hash": "",
+          "datum": "2026-11-08",
+          "titel": "Back-up, offline en Home Assistant (deze versie)"
+        }
+      ]
+    },
     {
       "versie": "2.2.1",
       "datum": "2026-11-08",
@@ -9,9 +22,9 @@
       "omschrijving": "Opgeruimd: testafbeeldingen, systeembestanden en de oude achtergrondfoto staan niet meer op de server.",
       "commits": [
         {
-          "hash": "",
-          "datum": "2026-11-08",
-          "titel": "Repo opgeruimd (deze versie)"
+          "hash": "99fce9f",
+          "datum": "2026-11-08 21:17",
+          "titel": "Repo opgeruimd"
         }
       ]
     },

@@ -1,7 +1,8 @@
 <?php
 header('Content-Type: application/json');
 require __DIR__ . '/auth.php';
-require_auth();
+// ha.php controleert zelf een Home Assistant-sleutel en zet dan WK_TOKEN_AUTH
+if (!defined('WK_TOKEN_AUTH')) require_auth();
 
 $configFile = __DIR__ . '/config.php';
 if (!file_exists($configFile)) {
@@ -19,10 +20,21 @@ try {
         [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
     );
 } catch (PDOException $e) {
+    // Technische details alleen in het serverlog, niet naar de app
+    error_log('Wijnkelder db: ' . $e->getMessage());
     http_response_code(500);
-    echo json_encode(['error' => 'Kan niet verbinden met database: ' . $e->getMessage()]);
+    echo json_encode(['error' => 'Kan niet verbinden met de database. Probeer het later opnieuw.']);
     exit;
 }
+
+// Schema-check: tabellen en kolommen aanmaken gebeurt maar één keer per schemaversie.
+// Dit bestand bevat alle tabel- en kolomdefinities; verander je er iets aan
+// (bv. een regel in $extraColumns erbij), dan wijzigt de sleutel en draait de check opnieuw.
+// De sleutel wordt bewaard in api/schema-ok.txt (staat in .gitignore).
+// Opnieuw forceren: verwijder api/schema-ok.txt via Plesk Bestandsbeheer.
+define('SCHEMA_FILE', __DIR__ . '/schema-ok.txt');
+$schemaKey = sha1_file(__FILE__);
+if (!is_file(SCHEMA_FILE) || trim((string) @file_get_contents(SCHEMA_FILE)) !== $schemaKey) {
 
 $pdo->exec("CREATE TABLE IF NOT EXISTS wines (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -100,3 +112,6 @@ $pdo->exec("CREATE TABLE IF NOT EXISTS tastings (
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     INDEX (wine_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+    @file_put_contents(SCHEMA_FILE, $schemaKey, LOCK_EX);
+}

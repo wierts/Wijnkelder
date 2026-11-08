@@ -75,17 +75,6 @@
     -webkit-font-smoothing: antialiased;
     position: relative;
   }
-  body::before {
-    content: ""; position: fixed; inset: 0; z-index: -2;
-    background-image: url('img/wijnkelder-achtergrond.jpg');
-    background-size: cover; background-position: center 30%; background-repeat: no-repeat;
-    filter: brightness(0.6) saturate(0.7) blur(2px);
-    transform: scale(1.02);
-  }
-  body::after {
-    content: ""; position: fixed; inset: 0; z-index: -1;
-    background: linear-gradient(180deg, var(--overlay-1), var(--overlay-2));
-  }
   button { font-family: inherit; }
   :is(button, input, textarea, select, [tabindex]):focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
@@ -268,6 +257,15 @@
   /* Historie */
   .history-summary { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin-bottom: 12px; }
   .history-summary .stat { cursor: default; }
+  .backup-panel { margin-top: 18px; }
+  .ha-yaml { width: 100%; min-height: 220px; margin-top: 10px; font-size: 0.75rem; font-family: ui-monospace, monospace; background: var(--card-bg); color: var(--text); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 8px; }
+  .ha-note { font-size: 0.8rem; color: var(--text-dim); margin: 8px 0 0; }
+  .offline-bar { background: var(--accent-tint); color: var(--ink); border-bottom: 1px solid var(--border); font-size: 0.82rem; padding: 7px 16px; text-align: center; }
+  .backup-text { margin: 4px 0 10px; font-size: 0.86rem; color: var(--text-dim); }
+  .backup-text .warn { color: var(--soon); font-weight: 600; }
+  .backup-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+  .backup-actions .btn { text-decoration: none; display: inline-flex; align-items: center; justify-content: center; }
+  @media (max-width: 480px) { .backup-actions .btn { flex: 1 1 100%; } }
   .fav-panel { margin-bottom: 16px; }
   .fav-panel h2 { font-size: 0.95rem; margin: 0 0 8px; }
   .value-big { font-family: var(--serif); font-size: 1.8rem; font-weight: 700; margin: 2px 0 4px; }
@@ -536,7 +534,7 @@
   .confirm-actions .btn { flex: 1; text-align: center; min-height: 44px; }
   .confirm-actions .btn.danger-fill { background: #b23a2e; border-color: #b23a2e; color: #fff; font-weight: 600; }
   .confirm-actions .btn.danger-fill:hover { background: #96271d; }
-  .confirm-actions .btn.save-fill { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+  .confirm-actions .btn.save-fill, .backup-actions .btn.save-fill { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
 
   .tabs { display: flex; gap: 6px; margin-bottom: 12px; }
   .tab {
@@ -574,6 +572,8 @@
   .scan-wait .box { background: var(--card-bg, #fff); color: var(--text); border-radius: 14px; padding: 16px 18px; max-width: 360px; width: 100%; box-shadow: 0 10px 30px rgba(0,0,0,0.25); }
   .scan-wait .notice { background: var(--soon-bg); color: var(--soon); border-radius: 10px; padding: 10px 12px; font-size: 0.86rem; }
   .scan-dup { border: 1px solid var(--soon); border-radius: 10px; padding: 10px 12px; font-size: 0.86rem; margin-top: 8px; }
+  .bulk-dup-list { margin: 6px 0 0; padding-left: 18px; }
+  .bulk-dup-list li { margin: 2px 0; }
   .photo-row { display: flex; gap: 12px; align-items: center; }
   .photo-prev {
     width: 56px; height: 76px; border-radius: 6px; border: 1px dashed var(--border); background: #fff;
@@ -653,7 +653,6 @@
     --head-bg: #1a1517; --head-ink: #f5f0ec;
   }
   body { font: 15.5px/1.5 Overpass, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; letter-spacing: 0.15px; }
-  body::before, body::after { display: none; }
   button, input, select, textarea { font-family: inherit; }
   h1, h2, h3, .card-title, .feature-name, .dv-name { color: var(--ink); }
 
@@ -854,6 +853,21 @@
   <div class="history-summary" id="historySummary"></div>
   <div id="historyFavs"></div>
   <div id="historyList"></div>
+  <section class="panel fav-panel backup-panel" aria-labelledby="backupTitle">
+    <h2 id="backupTitle">💾 Back-up en export</h2>
+    <p class="backup-text">Bewaar af en toe een kopie van je kelder, drinkhistorie en producenten. <span id="backupLast"></span></p>
+    <div class="backup-actions">
+      <a class="btn save-fill" href="api/export.php?format=json" download data-backup="json">Volledige back-up (JSON)</a>
+      <a class="btn" href="api/export.php?format=csv&amp;table=wines" download data-backup="csv">📄 Kelder als CSV (Excel)</a>
+      <a class="btn" href="api/export.php?format=csv&amp;table=tastings" download data-backup="csv">📄 Historie als CSV (Excel)</a>
+    </div>
+  </section>
+  <section class="panel fav-panel backup-panel" aria-labelledby="haTitle">
+    <h2 id="haTitle">🏠 Home Assistant</h2>
+    <p class="backup-text">Toon het aantal flessen en wat je nu moet drinken als sensoren in Home Assistant. <span id="haState"></span></p>
+    <div class="backup-actions" id="haActions"></div>
+    <div id="haSetup"></div>
+  </section>
 </div>
 
 </div>
@@ -2560,7 +2574,37 @@ function showDupWarning(found, data) {
   });
 }
 
-document.getElementById('bulkSaveBtn').addEventListener('click', async () => {
+// Meerdere plakken: eerst dubbelen zoeken (v2.2.1)
+function bulkPayload(w) {
+  return {
+    name: w.name, producer: w.producer || '', grape: w.grape || '', region: w.region || '',
+    country: w.country || deriveCountry(w.region), color: w.color || deriveColor([w.grape, w.name, w.region].join(' ')),
+    year: w.year || null, status: w.status || 'wait', window: w.window || '', location: w.location || '',
+    character: w.character || '', serving: w.serving || [], qty: Math.max(1, parseInt(w.qty, 10) || 1),
+    windowFrom: w.windowFrom || null, windowTo: w.windowTo || null,
+    purchaseDate: w.purchaseDate || null, purchasePrice: w.purchasePrice ?? null, notes: w.notes || '', image: w.image || '', marketPrice: w.marketPrice ?? null, marketNote: w.marketNote || '', size: w.size || 750,
+    purchaseSource: w.purchaseSource || '', purchasePlace: w.purchasePlace || ''
+  };
+}
+// Dezelfde wijn twee keer in de plaklijst → één regel met opgeteld aantal
+function mergeBulk(list) {
+  const out = [], seen = {};
+  list.forEach(w => {
+    const key = [norm(w.producer).join(' '), norm(w.name).join(' '), w.year || '', w.size || 750].join('|');
+    if (seen[key]) seen[key].qty += w.qty;
+    else { seen[key] = w; out.push(w); }
+  });
+  return out;
+}
+// Telt alleen als dubbel bij dezelfde jaargang én hetzelfde formaat
+function bulkMatch(w) {
+  const f = findExisting(w);
+  if (!f) return null;
+  const sameYear = String(f.year || '') === String(w.year || '');
+  return sameYear && sizeOf(f) === (Number(w.size) || 750) ? f : null;
+}
+let bulkPending = null;
+document.getElementById('bulkSaveBtn').addEventListener('click', () => {
   const raw = document.getElementById('bulkInput').value.trim();
   if (!raw) return;
   let parsed;
@@ -2571,33 +2615,52 @@ document.getElementById('bulkSaveBtn').addEventListener('click', async () => {
     showNotice('Kon de geplakte tekst niet lezen als JSON: ' + err.message);
     return;
   }
-  let count = 0, failed = 0;
-  for (const w of parsed) {
-    if (!w.name) continue;
+  const list = mergeBulk(parsed.filter(w => w && w.name).map(bulkPayload));
+  const items = list.map(w => ({ data: w, match: bulkMatch(w) }));
+  const dups = items.filter(i => i.match);
+  document.getElementById('bulkDup')?.remove();
+  if (!dups.length) return runBulkSave(items, 'add');
+  bulkPending = items;
+  const box = document.createElement('div');
+  box.id = 'bulkDup'; box.className = 'scan-dup';
+  box.innerHTML = `<div><strong>${dups.length === 1 ? '1 wijn staat' : dups.length + ' wijnen staan'} al in je kelder</strong> (zelfde jaargang en formaat):</div>
+    <ul class="bulk-dup-list">${dups.map(i => `<li>${escapeHtml([i.match.producer, i.match.name].filter(Boolean).join(' · '))}${i.match.year ? ' ' + i.match.year : ''} <span class="hint">+${plural(i.data.qty, 'fles', 'flessen')}</span></li>`).join('')}</ul>
+    <div class="confirm-actions" style="margin-top:10px">
+      <button class="btn save-fill" data-bulk-mode="add" type="button">Bijtellen bij bestaande</button>
+      <button class="btn" data-bulk-mode="separate" type="button">Toch apart opslaan</button>
+    </div>`;
+  document.getElementById('bulkSaveBtn').closest('.confirm-actions').before(box);
+  box.addEventListener('click', e => {
+    const b = e.target.closest('[data-bulk-mode]');
+    if (b && bulkPending) runBulkSave(bulkPending, b.dataset.bulkMode);
+  });
+  box.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+});
+async function runBulkSave(items, mode) {
+  bulkPending = null;
+  let added = 0, merged = 0, failed = 0;
+  for (const { data, match } of items) {
     try {
-      const res = await fetch(API_URL, {
-        method: 'POST',
-        body: JSON.stringify({
-          name: w.name, producer: w.producer || '', grape: w.grape || '', region: w.region || '',
-          country: w.country || deriveCountry(w.region), color: w.color || deriveColor([w.grape, w.name, w.region].join(' ')),
-          year: w.year || null, status: w.status || 'wait', window: w.window || '', location: w.location || '',
-          character: w.character || '', serving: w.serving || [], qty: w.qty || 1,
-          windowFrom: w.windowFrom || null, windowTo: w.windowTo || null,
-          purchaseDate: w.purchaseDate || null, purchasePrice: w.purchasePrice ?? null, notes: w.notes || '', image: w.image || '', marketPrice: w.marketPrice ?? null, marketNote: w.marketNote || '', size: w.size || 750,
-          purchaseSource: w.purchaseSource || '', purchasePlace: w.purchasePlace || ''
-        
-        })
-      });
-      if (!res.ok) throw new Error('save failed');
-      count++;
+      if (match && mode === 'add') {
+        await patchWine(match.id, match.drunk ? { drunk: false, qty: data.qty } : { qty: (match.qty || 1) + data.qty });
+        merged += data.qty;
+      } else {
+        const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify(data) });
+        if (!res.ok) throw new Error('save failed');
+        added += data.qty;
+      }
     } catch (err) { failed++; }
   }
+  document.getElementById('bulkDup')?.remove();
   document.getElementById('bulkInput').value = '';
   document.getElementById('addModalOverlay').classList.remove('open');
   await loadWines();
   render();
-  showToast(plural(count, 'fles', 'flessen') + ' toegevoegd aan de kelder.' + (failed ? ' ' + failed + ' mislukt.' : ''));
-});
+  const parts = [];
+  if (added) parts.push(plural(added, 'fles', 'flessen') + ' toegevoegd');
+  if (merged) parts.push(plural(merged, 'fles', 'flessen') + ' bijgeteld bij bestaande wijnen');
+  showToast((parts.join(', ') || 'Niets toegevoegd') + '.' + (failed ? ' ' + failed + ' mislukt.' : ''));
+}
 
 /* ---------- fles opgedronken: waardering + drinkhistorie ---------- */
 function openDrinkModal(id) {
@@ -2664,7 +2727,96 @@ function openDrinkModal(id) {
   document.getElementById('drinkModalOverlay').classList.add('open');
 }
 
+// Back-up: datum van de laatste volledige back-up op dit apparaat onthouden (v2.3.0)
+function renderBackupLast() {
+  const el = document.getElementById('backupLast');
+  if (!el) return;
+  let last = null;
+  try { last = localStorage.getItem('wk-last-backup'); } catch (e) {}
+  if (!last) { el.innerHTML = '<span class="warn">Op dit apparaat nog geen back-up gemaakt.</span>'; return; }
+  const days = Math.floor((Date.now() - new Date(last).getTime()) / 86400000);
+  const d = new Date(last);
+  const txt = `Laatste back-up: ${String(d.getDate()).padStart(2, '0')}-${String(d.getMonth() + 1).padStart(2, '0')}-${d.getFullYear()}.`;
+  el.innerHTML = days > 90 ? `<span class="warn">${txt} Tijd voor een nieuwe.</span>` : txt;
+}
+document.addEventListener('click', e => {
+  const a = e.target.closest('[data-backup="json"]');
+  if (!a) return;
+  if (!navigator.onLine) { e.preventDefault(); showNotice('Een back-up maken kan alleen met internet.'); return; }
+  try { localStorage.setItem('wk-last-backup', new Date().toISOString()); } catch (err) {}
+  setTimeout(renderBackupLast, 300);
+});
+
+// Home Assistant-koppeling (v2.5.0)
+const HA_URL = 'api/ha.php';
+let haEnabled = null, haLoaded = false, haConfirm = false;
+async function loadHaState() {
+  haLoaded = true;
+  try { const r = await fetch(HA_URL); haEnabled = r.ok ? !!(await r.json()).enabled : null; } catch (e) { haEnabled = null; }
+  renderHa();
+}
+function renderHa(token) {
+  const st = document.getElementById('haState'), act = document.getElementById('haActions'), set = document.getElementById('haSetup');
+  if (!st) return;
+  if (haEnabled === null) { st.textContent = ''; act.innerHTML = ''; set.innerHTML = ''; return; }
+  st.textContent = haEnabled ? 'Koppeling staat aan.' : 'Koppeling staat uit.';
+  act.innerHTML = haEnabled
+    ? '<button class="btn" type="button" data-ha="new">Nieuwe sleutel</button><button class="btn" type="button" data-ha="off">Koppeling uitzetten</button>'
+    : '<button class="btn save-fill" type="button" data-ha="new">Koppeling aanzetten</button>';
+  if (!token) { set.innerHTML = ''; return; }
+  const url = new URL(HA_URL, location.href).href;
+  const sensor = (name, id, key, icon, attrs) => `      - name: "${name}"
+        unique_id: wijnkelder_${id}
+        value_template: "{{ value_json.${key} }}"
+        unit_of_measurement: "flessen"
+        icon: ${icon}${attrs ? `
+        json_attributes:
+${attrs.map(a => '          - ' + a).join('\n')}` : ''}`;
+  const yaml = `# Wijnkelder – plak dit in configuration.yaml en herstart Home Assistant
+rest:
+  - resource: "${url}"
+    headers:
+      X-Wijnkelder-Token: "${token}"
+    scan_interval: 3600
+    sensor:
+${sensor('Wijnkelder flessen', 'flessen', 'flessen', 'mdi:bottle-wine', ['wijnen', 'gedronken_dit_jaar', 'laatst_gedronken'])}
+${sensor('Wijnkelder nu drinken', 'nu_drinken', 'nu_drinken', 'mdi:glass-wine', ['nu_drinken_lijst'])}
+${sensor('Wijnkelder over de top', 'over_de_top', 'over_de_top', 'mdi:alert-circle-outline', ['over_de_top_lijst'])}
+${sensor('Wijnkelder binnenkort', 'binnenkort', 'binnenkort', 'mdi:calendar-clock')}`;
+  set.innerHTML = `<p class="ha-note"><strong>Je sleutel wordt maar één keer getoond.</strong> Kopieer de configuratie hieronder nu; daarna is alleen een nieuwe sleutel mogelijk.</p>
+    <textarea class="mono ha-yaml" id="haYaml" readonly aria-label="Home Assistant-configuratie">${escapeHtml(yaml)}</textarea>
+    <div class="backup-actions" style="margin-top:8px"><button class="btn save-fill" type="button" data-ha="copy">Kopieer configuratie</button></div>`;
+}
+document.addEventListener('click', async e => {
+  const b = e.target.closest('[data-ha]');
+  if (!b) return;
+  const act = b.dataset.ha;
+  if (act === 'copy') {
+    const t = document.getElementById('haYaml');
+    try { await navigator.clipboard.writeText(t.value); showToast('Configuratie gekopieerd.'); }
+    catch (err) { t.select(); showToast('Selecteer en kopieer de tekst handmatig.'); }
+    return;
+  }
+  if (act === 'new' && haEnabled && !haConfirm) {
+    haConfirm = true;
+    b.textContent = 'Zeker? Oude sleutel stopt';
+    setTimeout(() => { if (haConfirm) { haConfirm = false; renderHa(); } }, 4000);
+    return;
+  }
+  haConfirm = false;
+  try {
+    const r = await fetch(HA_URL, { method: act === 'off' ? 'DELETE' : 'POST' });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(j.error || 'mislukt');
+    haEnabled = act !== 'off';
+    renderHa(j.token);
+    showToast(act === 'off' ? 'Home Assistant-koppeling uitgezet.' : 'Nieuwe sleutel gemaakt.');
+  } catch (err) { if (err.message !== 'offline') showNotice('Home Assistant-koppeling: ' + err.message); }
+});
+
 function renderHistory() {
+  renderBackupLast();
+  if (!haLoaded) loadHaState();
   const list = tastings;
   const rated = list.filter(t => t.rating);
   const avg = rated.length ? (rated.reduce((s, t) => s + t.rating, 0) / rated.length) : null;
@@ -2871,6 +3023,11 @@ let loginOpen = false;
 // Elk API-antwoord 401 → inlogscherm tonen
 const _fetch = window.fetch.bind(window);
 window.fetch = async (...args) => {
+  const method = String((args[1] && args[1].method) || 'GET').toUpperCase();
+  if (method !== 'GET' && !navigator.onLine && String(args[0]).startsWith('api/')) {
+    showToast('Je bent offline. Wijzigen kan weer zodra je internet hebt.');
+    throw new Error('offline');
+  }
   const res = await _fetch(...args);
   if (res.status === 401 && String(args[0]).startsWith('api/')) {
     const j = await res.clone().json().catch(() => ({}));
@@ -2924,8 +3081,31 @@ async function init() {
   } catch (err) {
     if (loginOpen) return;
     document.getElementById('headerCount').textContent = 'Kan wijnvoorraad niet laden';
-    showNotice('Kan niet verbinden met de database. Controleer of api/config.php goed staat ingesteld.');
+    showNotice(navigator.onLine
+      ? 'Kan niet verbinden met de database. Controleer of api/config.php goed staat ingesteld.'
+      : 'Je bent offline en er is op dit apparaat nog geen kopie van je kelder. Open de app één keer met internet.');
   }
+}
+
+/* ---------- offline gebruik (v2.4.0) ---------- */
+// Zonder internet toont de app de laatst geladen kelder; wijzigen kan pas weer online.
+function updateOfflineBar() {
+  let bar = document.getElementById('offlineBar');
+  if (navigator.onLine) { if (bar) bar.remove(); return; }
+  if (bar) return;
+  bar = document.createElement('div');
+  bar.id = 'offlineBar'; bar.className = 'offline-bar'; bar.setAttribute('role', 'status');
+  bar.textContent = 'Offline: je ziet je kelder zoals bij de laatste keer laden. Wijzigen kan weer zodra je internet hebt.';
+  document.querySelector('header').after(bar);
+}
+window.addEventListener('offline', updateOfflineBar);
+window.addEventListener('online', async () => {
+  updateOfflineBar();
+  try { await Promise.all([loadWines(), loadProducers(), loadTastings()]); render(); } catch (e) {}
+});
+updateOfflineBar();
+if ('serviceWorker' in navigator && location.protocol === 'https:') {
+  navigator.serviceWorker.register('sw.js').catch(() => {});
 }
 init();
 </script>

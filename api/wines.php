@@ -209,8 +209,15 @@ switch ($method) {
             echo json_encode(['error' => 'id is verplicht']);
             exit;
         }
+        // Eigen etiketfoto (img/etiketten/wijn-…) meteen opruimen
+        $old = $pdo->prepare('SELECT image FROM wines WHERE id = ?');
+        $old->execute([$id]);
+        $prev = (string) $old->fetchColumn();
         $stmt = $pdo->prepare('DELETE FROM wines WHERE id = ?');
         $stmt->execute([$id]);
+        if (preg_match('#^img/etiketten/wijn-\d+-\d+\.jpg$#', $prev) && is_file(dirname(__DIR__) . '/' . $prev)) {
+            @unlink(dirname(__DIR__) . '/' . $prev);
+        }
         echo json_encode(['ok' => true]);
         break;
 
