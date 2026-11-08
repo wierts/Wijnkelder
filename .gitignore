@@ -1,3 +1,6 @@
 api/config.php
 api/wachtwoord.php
+api/schema-ok.txt
+api/ha-token.php
 .DS_Store
+Claude outputs/
